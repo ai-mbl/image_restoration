@@ -2,12 +2,32 @@
 
 ## Setup
 
-We create multiple conda environments for this exercise. This exercise is, in fact, multiple sub-exercises.
+Conda environments are useful to keep your workflows running, even if they have conflicting dependencies. For examples,
+one method might be using TensorFlow 1.x and the old python 2.7, while another uses TensorFlow 2.x and some python 3
+version.
 
-<a href="https://docs.google.com/document/d/1yTNrIxFCOnm2QgyjO_5Dk0dXud7RBPxeGkMkeYX_sb4/edit?usp=sharing">
-  <img src="https://raw.githubusercontent.com/dlmbl/03_image_restoration/main/img_sheet.png" alt="Exercise Sheet" width="33%"/>
-</a>
+This exercise is split into several parts. They use different libraries so to keep things tidy we will set up separate conda environments
 
-We have prepared a google doc that will help you run through these exercises. 
-You can access it [here](https://docs.google.com/document/d/1yTNrIxFCOnm2QgyjO_5Dk0dXud7RBPxeGkMkeYX_sb4/edit?usp=sharing), 
-and even comment on it... so... if you want us to know how to improve the exercises or so... let us know!
+For the first and second part, we will set up a conda environment for CARE/CSBDeep. Make sure to first deactivate a previous conda environment, e.g. from the last exercise.
+
+```
+# create a new conda environment called 'care' and initialize it with python version 3.7
+conda create -n care python=3.7
+# activate the environment
+conda activate care
+# install necessary dependencies
+conda install tensorflow-gpu keras jupyter tensorboard nb_conda
+pip install CSBDeep
+```
+
+For the third part, we will set up a conda enviroment for Noise2Noise.
+
+```
+# deactivate your active conda environment
+conda deactivate
+# create a new conda environment called 'n2v' and initialize it with python version 3.7
+conda create -n 'n2v' python=3.7
+conda activate n2v
+conda install tensorflow-gpu=2.4.1 keras=2.3.1 tensorboard nb_conda
+pip install n2v
+```
