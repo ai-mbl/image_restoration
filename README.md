@@ -20,7 +20,7 @@ conda install tensorflow-gpu keras jupyter tensorboard nb_conda
 pip install CSBDeep
 ```
 
-For the third part, we will set up a conda enviroment for Noise2Noise.
+For the third part, we will set up a conda enviroment for Noise2Void.
 
 ```
 # deactivate your active conda environment
