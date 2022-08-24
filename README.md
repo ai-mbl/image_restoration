@@ -42,9 +42,9 @@ And finally, if you make it to the bonus exercise, we need one more environment.
 # deactivate your active conda environment
 conda deactivate
 # create a new conda environment called 'pn2v'
-conda create -n 'ppn2v' python=3.7
+conda create -n 'pn2v' python=3.7
 # activate the new environment
-conda activate ppn2v
+conda activate pn2v
 # install dependencies from conda
 conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch -c conda-forge
 conda install nb_conda tifffile matplotlib scipy
