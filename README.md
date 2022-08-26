@@ -16,7 +16,7 @@ conda create -n care python=3.7
 # activate the environment
 conda activate care
 # install dependencies from conda
-conda install tensorflow-gpu keras jupyter tensorboard nb_conda
+conda install tensorflow-gpu keras jupyter tensorboard nb_conda scikit-image
 # install dependencies from pip
 pip install CSBDeep
 ```
@@ -31,7 +31,7 @@ conda create -n 'n2v' python=3.7
 # activate the new environment
 conda activate n2v
 #install dependencies from conda
-conda install tensorflow-gpu=2.4.1 keras=2.3.1 tensorboard nb_conda
+conda install tensorflow-gpu=2.4.1 keras=2.3.1 tensorboard nb_conda scikit-image
 # install dependencies from pip
 pip install n2v
 ```
