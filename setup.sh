@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash -i
+#!/bin/bash -i
 
 # activate base environment
 mamba activate base
@@ -27,13 +27,11 @@ pip install n2v
 mamba activate base
 
 # create a new environment called '03_image_restoration_bonus'
-mamba create -y -n 03_image_restoration_bonus python=3.7
+mamba create -y -n 03_image_restoration_bonus python=3.9
 # activate the environment
 mamba activate 03_image_restoration_bonus
 # install pytorch depencencies
-mamba install -y pytorch torchvision torchaudio cudatoolkit=11.8 'numpy<1.24' -c pytorch -c conda-forge
-# install other dependencies from conda
-mamba install -y nb_conda tifffile matplotlib scipy
+mamba install -y pytorch torchvision pytorch-cuda=11.8 'numpy<1.23' scipy matplotlib tifffile jupyter nb_conda_kernels -c pytorch -c nvidia
 # install PPN2V repo from github
 pip install git+https://github.com/juglab/PPN2V.git
 # activate base environment

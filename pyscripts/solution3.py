@@ -9,7 +9,7 @@ We will now train a Noise2Void network from single noisy images.
 
 This notebook uses a single image from the SEM data from the Noise2Noise notebook, but as you'll see in Task 3.1 if you brought your own raw data you should adapt the notebook to use that instead.
 
-We now use the Noise2Void ([n2v](https://github.com/juglab/n2v)) library instead of csbdeep/care, but don't worry - they're pretty similar. Make sure you have the right kernel (`n2v`) selected.
+We now use the [Noise2Void library](https://github.com/juglab/n2v) instead of csbdeep/care, but don't worry - they're pretty similar.
 
 <div class="alert alert-danger">
 Set your python kernel to <code>03_image_restoration_part2</code>
@@ -259,7 +259,7 @@ plt.show()
     TASK 3.3</h4>
     <p>
 
-If you're using the SEM data (or happen to have a high SNR version of the image you predicted from) compare the structural similarity index and peak signal to noise ratio (wrt the high SNR image) of the noisy input image and the predicted image.
+If you're using the SEM data (or happen to have a high SNR version of the image you predicted from) compare the structural similarity index and peak signal to noise ratio (wrt the high SNR image) of the noisy input image and the predicted image. If not, just skip this task.
     </p>
 </div>
 """
@@ -307,7 +307,7 @@ print(
     <b>You have reached the third checkpoint of this exercise! Please mark your progress on element!</b>
     </p>
     <p>
-    If you used your own data, consider sharing some pictures on element.
+    Consider sharing some pictures of your results on element, especially if you used your own data.
     </p>
     <p>
     If there's still time, check out the bonus exercise.

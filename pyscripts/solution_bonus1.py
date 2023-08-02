@@ -10,7 +10,16 @@ In order to get some additional quality squeezed out of your noisy input data, P
 Below we will give you a noise model for the first network to train and then bootstrap one, so you can apply PN2V to your own data if you'd like.
 
 Note: The PN2V implementation is written in pytorch, not Keras/TF.
-Note: PN2V experienced multiple updates regarding noise model representations. Hence, the [original PN2V repository](https://github.com/juglab/pn2v) is not any more the one we suggest to use (despite it of course working just as described in the original publication). So here we use the [PPN2V repo](https://github.com/juglab/PPN2V) which you cloned during setup.
+
+Note: PN2V experienced multiple updates regarding noise model representations. Hence, the [original PN2V repository](https://github.com/juglab/pn2v) is not any more the one we suggest to use (despite it of course working just as described in the original publication). So here we use the [PPN2V repo](https://github.com/juglab/PPN2V) which you installed during setup.
+
+<div class="alert alert-danger">
+Set your python kernel to <code>03_image_restoration_bonus</code>
+</div>
+<div class="alert alert-danger">
+Make sure your previous notebook is shutdown to avoid running into GPU out-of-memory problems.
+</div>
+
 """
 # %%
 import warnings
@@ -30,19 +39,10 @@ import urllib
 import zipfile
 
 # %%
-path_to_ppn2v_repo = "PPN2V"
-assert os.path.exists(
-    path_to_ppn2v_repo
-), "change the `path_to_ppn2v_repo` to point to the PPN2V repo you cloned during setup"
-sys.path.append(path_to_ppn2v_repo)
-import unet.model
-from unet.model import UNet
-from pn2v import *
-import pn2v.gaussianMixtureNoiseModel
-import pn2v.histNoiseModel
-import pn2v.prediction
-import pn2v.training
-from pn2v.utils import *
+from ppn2v.pn2v import histNoiseModel, gaussianMixtureNoiseModel
+from ppn2v.pn2v.utils import plotProbabilityDistribution, PSNR
+from ppn2v.unet.model import UNet
+from ppn2v.pn2v import training, prediction
 
 # %% [markdown]
 """
@@ -113,12 +113,12 @@ The calibration data contains 100 images of a static sample. Estimate the clean 
 """
 # %%
 ###TODO###
-# Average the images in the `observation` array
+# Average the images in `calibration_imgs`
 signal_cal = ...  # TODO
 
 
 # %% tags = ["solution"]
-# Average the images in the `observation` array
+# Average the images in `calibration_imgs`
 signal_cal = np.mean(calibration_imgs[:, ...], axis=0)[np.newaxis, ...]
 # %% [markdown]
 """
@@ -161,7 +161,7 @@ Using the raw pixels $x_i$, and our averaged GT $s_i$, we are now learning a his
 </div>
 """
 # %%
-# ?pn2v.histNoiseModel.createHistogram
+# ?histNoiseModel.createHistogram
 
 # %%
 ###TODO###
@@ -171,7 +171,7 @@ bins = 256
 min_val = ...  # TODO
 max_val = ...  # TODO
 # Create the histogram
-histogram_cal = pn2v.histNoiseModel.createHistogram(bins, ...)  # TODO
+histogram_cal = histNoiseModel.createHistogram(bins, ...)  # TODO
 
 # %% tags = ["solution"]
 # Define the parameters for the histogram creation
@@ -181,7 +181,7 @@ min_val = 234  # np.min(noisy_imgs)
 max_val = 7402  # np.max(noisy_imgs)
 print("min:", min_val, ", max:", max_val)
 # Create the histogram
-histogram_cal = pn2v.histNoiseModel.createHistogram(
+histogram_cal = histNoiseModel.createHistogram(
     bins, min_val, max_val, calibration_imgs, signal_cal
 )
 # %% [markdown]
@@ -218,9 +218,9 @@ print("Maximum Signal Intensity is", max_signal)
 Iterating the noise model training for `n_epoch=2000` and `batchSize=250000` works the best for `Convallaria` dataset.
 """
 # %%
-# ?pn2v.gaussianMixtureNoiseModel.GaussianMixtureNoiseModel
+# ?gaussianMixtureNoiseModel.GaussianMixtureNoiseModel
 # %%
-gmm_noise_model_cal = pn2v.gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
+gmm_noise_model_cal = gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
     min_signal=min_signal,
     max_signal=max_signal,
     path=path,
@@ -285,7 +285,7 @@ np.random.shuffle(train_data)
 np.random.shuffle(val_data)
 
 # %%
-train_history, val_history = pn2v.training.trainNetwork(
+train_history, val_history = training.trainNetwork(
     net=n2v_net,
     trainData=train_data,
     valData=val_data,
@@ -318,7 +318,7 @@ for index in range(noisy_imgs.shape[0]):
     im = noisy_imgs[index]
     # We are using tiling to fit the image into memory
     # If you get an error try a smaller patch size (ps)
-    n2v_pred = pn2v.prediction.tiledPredict(
+    n2v_pred = prediction.tiledPredict(
         im, n2v_net, ps=256, overlap=48, device=device, noiseModel=None
     )
     n2v_result_imgs.append(n2v_pred)
@@ -361,7 +361,7 @@ Now that we have pseudoGT, you can pick again between a histogram based noise mo
 </div>
 """
 # %%
-# ?pn2v.histNoiseModel.createHistogram
+# ?histNoiseModel.createHistogram
 # %%
 ###TODO###
 # Define the parameters for the histogram creation
@@ -370,7 +370,7 @@ bins = 256
 min_val = ...  # TODO
 max_val = ...  # TODO
 # Create the histogram
-histogram_bootstrap = pn2v.histNoiseModel.createHistogram(bins, ...)  # TODO
+histogram_bootstrap = histNoiseModel.createHistogram(bins, ...)  # TODO
 # %% tags=["solution"]
 # Define the parameters for the histogram creation
 bins = 256
@@ -378,7 +378,7 @@ bins = 256
 min_val = np.min(noisy_imgs)
 max_val = np.max(noisy_imgs)
 # Create the histogram
-histogram_bootstrap = pn2v.histNoiseModel.createHistogram(
+histogram_bootstrap = histNoiseModel.createHistogram(
     bins, min_val, max_val, noisy_imgs, signal_bootstrap
 )
 # %% [markdown]
@@ -413,7 +413,7 @@ print("Maximum Signal Intensity is", max_signal)
 Iterating the noise model training for `n_epoch=2000` and `batchSize=250000` works the best for `Convallaria` dataset.
 """
 # %%
-gmm_noise_model_bootstrap = pn2v.gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
+gmm_noise_model_bootstrap = gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
     min_signal=min_signal,
     max_signal=max_signal,
     path=path,
@@ -473,13 +473,13 @@ noise_model_data = "bootstrap"  # pick: "calibration" or "bootstrap"
 if noise_model_type == "hist":
     noise_model_name = "_".join(["HistNoiseModel", data_name, noise_model_data])
     histogram = np.load(path + noise_model_name + ".npy")
-    noise_model = pn2v.histNoiseModel.NoiseModel(histogram, device=device)
+    noise_model = histNoiseModel.NoiseModel(histogram, device=device)
 elif noise_model_type == "gmm":
     noise_model_name = "_".join(
         ["GMMNoiseModel", data_name, str(n_gaussian), str(n_coeff), noise_model_data]
     )
     params = np.load(path + noise_model_name + ".npz")
-    noise_model = pn2v.gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
+    noise_model = gaussianMixtureNoiseModel.GaussianMixtureNoiseModel(
         params=params, device=device
     )
 # %% [markdown]
@@ -491,7 +491,7 @@ elif noise_model_type == "gmm":
 pn2v_net = UNet(800, depth=3)
 # %%
 # Start training.
-trainHist, valHist = pn2v.training.trainNetwork(
+trainHist, valHist = training.trainNetwork(
     net=pn2v_net,
     trainData=train_data,
     valData=val_data,
@@ -538,7 +538,7 @@ for index in range(test_data.shape[0]):
 
     # We are using tiling to fit the image into memory
     # If you get an error try a smaller patch size (ps)
-    means, mse_est = pn2v.prediction.tiledPredict(
+    means, mse_est = prediction.tiledPredict(
         im, pn2v_net, ps=192, overlap=48, device=device, noiseModel=noise_model
     )
 
@@ -560,7 +560,7 @@ for index in range(test_data.shape[0]):
     print("-----------------------------------")
 
 # %%
-# ?pn2v.prediction.tiledPredict
+# ?prediction.tiledPredict
 
 # %%
 # We display the results for the last test image

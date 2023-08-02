@@ -350,6 +350,14 @@ plt.show()
 # %% [markdown]
 """
 <hr style="height:2px;">
+<div class="alert alert-block alert-success"><h1>
+    Congratulations!</h1>
+    <p>
+    <b>You have reached the first checkpoint of this exercise! Please mark your progress on element!</b>
+    </p>
+</div>
+
+<hr style="height:2px;">
 <div class="alert alert-block alert-warning"><h3>
     Bonus Questions:</h3>
     <p>
@@ -359,13 +367,5 @@ plt.show()
         <li>How would you load an existing CARE network and continue to train it? (This is _not_ done in this notebook)</li>
         <li>How would you go about saving the new model separately, under a new name?</li>
     </ol>
-</div>
-
-<hr style="height:2px;">
-<div class="alert alert-block alert-success"><h1>
-    Congratulations!</h1>
-    <p>
-    <b>You have reached the first checkpoint of this exercise! Please mark your progress on element!</b>
-    </p>
 </div>
 """

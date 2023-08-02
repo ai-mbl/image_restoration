@@ -4,7 +4,7 @@
 
 # Train a Noise2Noise network with CARE
 <div class="alert alert-danger">
-Set your python kernel to <code>03_image_restoration_part1</code>
+Set your python kernel to <code>03_image_restoration_part1</code>! That's the same as for the first notebook.
 </div>
 
 We will now train a 2D Noise2Noise network using CARE. We will closely follow along the previous example but now you will have to fill in some parts on your own!
@@ -14,6 +14,7 @@ But first some clean up...
 <div class="alert alert-danger">
 Make sure your previous notebook is shutdown to avoid running into GPU out-of-memory problems.
 </div>
+![](nb_material/notebook_shutdown.png)
 """
 # %%
 from __future__ import absolute_import, division, print_function, unicode_literals

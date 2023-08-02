@@ -1,53 +1,11 @@
 # Exercise 3: Image Restoration
 
-## Setup
+In this exercise you will get to try out some of the image restoration techniques that you just learned about in the lecture.
 
-Conda environments are useful to keep your workflows running, even if they have conflicting dependencies. For examples,
-one method might be using TensorFlow 1.x and the old python 2.7, while another uses TensorFlow 2.x and some python 3
-version.
+Start by setting up all the environments you need by opening a terminal and running the `setup.sh` script.
 
-This exercise is split into several parts. They use different libraries so to keep things tidy we will set up separate conda environments. We will make use of the very useful`nb_conda` to be able to switch environments in jupyter.
+In the first part of the exercise `exercise1.ipynb` you will use paired images with high and low signal to noise ratios to train a supervised CARE network. The second part (`exercise2.ipynb`) you will train a Noise2Noise network with multiple SEM acquisitions of the same sample at various noise levels. And in part 3 (`exercise3.ipynb`) you can train a Noise2Void network on your own data (if you'd like).
 
-For the first and second part, we will set up a conda environment for CARE/CSBDeep. Make sure to first deactivate a previous conda environment, e.g. from the last exercise.
+All exercise notebooks are closely modeled after example notebooks that were provided as part of the respective repositories by their authors. This won't always be the case but think of this exercise as a good example of the situation you'll find yourself in if you find a deep learning method "in the wild" that you would like to try out yourself.
 
-```
-# create a new conda environment called 'care' and initialize it with python version 3.7
-conda create -n care python=3.7
-# activate the environment
-conda activate care
-# install dependencies from conda
-conda install tensorflow-gpu keras jupyter tensorboard nb_conda scikit-image
-# install dependencies from pip
-pip install CSBDeep
-```
-
-For the third part, we will set up a conda enviroment for Noise2Void.
-
-```
-# deactivate your active conda environment
-conda deactivate
-# create a new conda environment called 'n2v' and initialize it with python version 3.7
-conda create -n 'n2v' python=3.7
-# activate the new environment
-conda activate n2v
-#install dependencies from conda
-conda install tensorflow-gpu=2.4.1 keras=2.3.1 tensorboard nb_conda scikit-image
-# install dependencies from pip
-pip install n2v
-```
-
-And finally, if you make it to the bonus exercise, we need one more environment. This one using pytorch. In addition, you'll have to clone the ppn2v repo.
-
-```
-# deactivate your active conda environment
-conda deactivate
-# create a new conda environment called 'pn2v'
-conda create -n 'pn2v' python=3.7
-# activate the new environment
-conda activate pn2v
-# install dependencies from conda
-conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch -c conda-forge
-conda install nb_conda tifffile matplotlib scipy
-# clone the pp2nv repo
-git clone https://github.com/juglab/PPN2V.git
-```
+If you have extra time in the end check out `exercise_bonus1.ipynb` if you're interested in Probabilistic Noise2Void or `exercise_bonus2.md` for DivNoising where you will go one step further by cloning the repo yourself, setting up your own environment and running an example notebook from the repo.
