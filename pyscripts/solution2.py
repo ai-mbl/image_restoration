@@ -14,6 +14,7 @@ But first some clean up...
 <div class="alert alert-danger">
 Make sure your previous notebook is shutdown to avoid running into GPU out-of-memory problems.
 </div>
+
 ![](nb_material/notebook_shutdown.png)
 """
 # %%
@@ -30,7 +31,6 @@ from csbdeep.models import CARE, Config
 from csbdeep.utils import (
     Path,
     axes_dict,
-    download_and_extract_zip_file,
     plot_history,
     plot_some,
 )
@@ -51,13 +51,11 @@ from tifffile import imread, imwrite
 ### Download example data
 
 To train a Noise2Noise setup we need several acquisitions of the same sample.
-The data we're downloading here contains 2 tiff-stacks, one for training and one for testing.
+The SEM data we downloaded during setup contains 2 tiff-stacks, one for training and one for testing, let's make sure it's there!
 """
 # %%
-download_and_extract_zip_file(
-    url="https://download.fht.org/jug/n2n_sem_data/n2n_sem_data.zip",
-    targetdir="data",
-)
+assert os.path.exists("data/SEM/train/train.tif")
+assert os.path.exists("data/SEM/test/test.tif")
 
 # %% [markdown]
 # Let's have a look at the data!
@@ -471,7 +469,7 @@ for i in range(x_train.shape[0]):
 <div class="alert alert-block alert-success"><h1>
     Congratulations!</h1>
     <p>
-    <b>You have reached the second checkpoint of this exercise! Please mark your progress on element!</b>
+    <b>You have reached the second checkpoint of this exercise! Please mark your progress in the course chat!</b>
     </p>
 </div>
 """

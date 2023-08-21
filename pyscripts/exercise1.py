@@ -27,6 +27,7 @@ Set your python kernel to <code>03_image_restoration_part1</code>
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import matplotlib.pyplot as plt
+import os
 import numpy as np
 from csbdeep.data import (
     RawData,
@@ -40,7 +41,6 @@ from csbdeep.models import CARE, Config
 from csbdeep.utils import (
     Path,
     axes_dict,
-    download_and_extract_zip_file,
     normalize,
     plot_history,
     plot_some,
@@ -59,16 +59,13 @@ from tifffile import imread
 ## Part 1: Training Data Generation
 Network training usually happens on batches of smaller sized images than the ones recorded on a microscopy. In this first part of the exercise, we will load all of the image data and chop it into smaller pieces, a.k.a. patches.
 
-### Download example data
+### Look at example data
 
-First we download some example data, consisting of low-SNR and high-SNR 3D images of Tribolium.
+During setup, we downloaded some example data, consisting of low-SNR and high-SNR 3D images of Tribolium.
 Note that `GT` stands for ground truth and represents high signal-to-noise ratio (SNR) stacks.
 """
 # %%
-download_and_extract_zip_file(
-    url="https://zenodo.org/record/6973411/files/care_denoising_upsampling.zip?download=1",
-    targetdir="data/U2OS/",
-)
+assert os.path.exists("data/U2OS")
 # %% [markdown]
 """
 As we can see, the data set is already split into a **train** and **test** set, each containing (synthetically generated) low SNR ("low") and corresponding high SNR ("GT") images.
@@ -229,13 +226,10 @@ Training the model will likely take some time. We recommend to monitor the progr
 Furthermore, you can look at the predictions for some of the validation images, which can be helpful to recognize problems early on.
 
 We can start tensorboard within the notebook.
-<div class="alert alert-danger">
-Note that if you're using ssh instead of nomachine you will need to forward the port that tensorboard picks (6006 by default, but can be different), i.e. running something that looks like this:
-<code>ssh -NL 6006:localhost:6006 &lt;user&gt;@&lt;hostname&gt;</code>
-</div>
+
 Alternatively, you can launch the notebook in an independent tab by changing the `%` to `!`
 <div class="alert alert-danger">
-If you're using ssh add <code>--host &lt;hostname&gt;</code> to the command. (This has the advantage that you don't need to first check what port tensorboard picks):
+If you're using ssh add <code>--host &lt;hostname&gt;</code> to the command:
 <code>! tensorboard --logdir models --host &lt;hostname&gt;</code> where <code>&lt;hostname&gt;</code> is the thing that ends in amazonaws.com.
 </div>
 """
@@ -353,19 +347,7 @@ plt.show()
 <div class="alert alert-block alert-success"><h1>
     Congratulations!</h1>
     <p>
-    <b>You have reached the first checkpoint of this exercise! Please mark your progress on element!</b>
+    <b>You have reached the first checkpoint of this exercise! Please mark your progress in the course chat!</b>
     </p>
-</div>
-
-<hr style="height:2px;">
-<div class="alert alert-block alert-warning"><h3>
-    Bonus Questions:</h3>
-    <p>
-    Feel free to skip these
-    </p>
-    <ol>
-        <li>How would you load an existing CARE network and continue to train it? (This is _not_ done in this notebook)</li>
-        <li>How would you go about saving the new model separately, under a new name?</li>
-    </ol>
 </div>
 """

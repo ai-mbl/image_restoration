@@ -53,19 +53,9 @@ All 100 recorded images (1024×1024 pixels) show the same region of interest and
 """
 
 # %%
-# Download data
+# Check that data download was successful
+assert os.path.exists("data/Convallaria_diaphragm")
 
-if not os.path.isdir("data"):
-    os.mkdir("data")
-
-zipPath = "data/Convallaria_diaphragm.zip"
-if not os.path.exists(zipPath):
-    data = urllib.request.urlretrieve(
-        "https://zenodo.org/record/5156913/files/Convallaria_diaphragm.zip?download=1",
-        zipPath,
-    )
-    with zipfile.ZipFile(zipPath, "r") as zip_ref:
-        zip_ref.extractall("data")
 
 # %%
 path = "data/Convallaria_diaphragm/"
@@ -636,7 +626,7 @@ print(
 <div class="alert alert-block alert-success"><h1>
     Congratulations!</h1>
     <p>
-    <b>You have reached the bonus checkpoint of this exercise! Please mark your progress on element!</b>
+    <b>You have completed the bonus exercise!</b>
     </p>
 </div>
 """

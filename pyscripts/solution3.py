@@ -59,10 +59,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 <hr style="height:2px;">
 
 ## Part 1: Prepare data
-We downloaded the data during the Noise2Noise exercise, but let's make sure it's there!
+Let's make sure the data is there!
 """
 # %%
-# if you get an error go to the Noise2Noise notebook and download the data
 assert os.path.exists("data/SEM/train/train.tif")
 assert os.path.exists("data/SEM/test/test.tif")
 # %% [markdown]
@@ -304,7 +303,7 @@ print(
 <div class="alert alert-block alert-success"><h1>
     Congratulations!</h1>
     <p>
-    <b>You have reached the third checkpoint of this exercise! Please mark your progress on element!</b>
+    <b>You have reached the third checkpoint of this exercise! Please mark your progress in the course chat!</b>
     </p>
     <p>
     Consider sharing some pictures of your results on element, especially if you used your own data.

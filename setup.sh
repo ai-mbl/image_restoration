@@ -36,3 +36,8 @@ mamba install -y pytorch torchvision pytorch-cuda=11.8 'numpy<1.23' scipy matplo
 pip install git+https://github.com/juglab/PPN2V.git
 # activate base environment
 mamba activate base
+
+
+# Data download 
+wget https://dl-at-mbl-2023-data.s3.us-east-2.amazonaws.com/image_restoration_data.zip 
+unzip -q image_restoration_data.zip

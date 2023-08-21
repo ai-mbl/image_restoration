@@ -2,7 +2,7 @@
 
 In this exercise you will get to try out some of the image restoration techniques that you just learned about in the lecture.
 
-Start by setting up all the environments you need by opening a terminal and running the `setup.sh` script.
+Start by setting up all the environments and downloading the example data: Open a terminal and run `source setup.sh`.
 
 In the first part of the exercise `exercise1.ipynb` you will use paired images with high and low signal to noise ratios to train a supervised CARE network. The second part (`exercise2.ipynb`) you will train a Noise2Noise network with multiple SEM acquisitions of the same sample at various noise levels. And in part 3 (`exercise3.ipynb`) you can train a Noise2Void network on your own data (if you'd like).
 
