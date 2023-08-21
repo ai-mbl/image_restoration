@@ -135,16 +135,17 @@ plt.title("Validation patch")
 
 Noise2Void comes with a special config-object, where we store network-architecture and training specific parameters. See the docstring of the <code>N2VConfig</code> constructor for a description of all parameters.
 
-When creating the config-object, we provide the training data <code>X</code>. From <code>X</code> we extract <code>mean</code> and <code>std</code> that will be used to normalize all data before it is processed by the network. We also extract the dimensionality and number of channels from <code>X</code>.
+When creating the config-object, we provide the training data <code>X</code>. From <code>X</code> the library will extract <code>mean</code> and <code>std</code> that will be used to normalize all data before it is processed by the network.
 
-Compared to supervised training (i.e. traditional CARE), we recommend to use N2V with an increased <code>train_batch_size</code> and <code>batch_norm</code>.
-To keep the network from learning the identity we have to manipulate the input pixels during training. For this we have the parameter <code>n2v_manipulator</code> with default value <code>'uniform_withCP'</code>. Most pixel manipulators will compute the replacement value based on a neighborhood. With <code>n2v_neighborhood_radius</code> we can control its size.
 
-Other pixel manipulators:
-* normal_withoutCP: samples the neighborhood according to a normal gaussian distribution, but without the center pixel
-* normal_additive: adds a random number to the original pixel value. The random number is sampled from a gaussian distribution with zero-mean and sigma = <code>n2v_neighborhood_radius</code>
-* normal_fitted: uses a random value from a gaussian normal distribution with mean equal to the mean of the neighborhood and standard deviation equal to the standard deviation of the neighborhood.
-* identity: performs no pixel manipulation
+Compared to supervised training (i.e. traditional CARE), we recommend to use N2V with an increased <code>train_batch_size</code> (e.g. 128) and <code>batch_norm</code>.
+
+To keep the network from learning the identity we have to manipulate the input pixels for the blindspot during training. How to exactly manipulate those values is controlled via the <code>n2v_manipulator</code> parameter with default value <code>'uniform_withCP'</code> which samples a random value from the surrounding pixels, including the value at the control point. The size of the  surrounding area can be configured via <code>n2v_neighborhood_radius</code>.
+
+The [paper supplement](https://arxiv.org/src/1811.10980v2/anc/supp_small.pdf) describes other pixel manipulators as well (section 3.1). If you want to configure one of those use the following values for <code>n2v_manipulator</code>:
+* <code>"normal_additive"</code> for Gaussian (<code>n2v_neighborhood_radius</code> will set sigma)
+* <code>"normal_fitted"</code> for Gaussian Fitting
+* <code>"normal_withoutCP"</code> for Gaussian Pixel Selection
 
 For faster training multiple pixels per input patch can be manipulated. In our experiments we manipulated about 0.198% of the input pixels per patch. For a patch size of 64 by 64 pixels this corresponds to about 8 pixels. This fraction can be tuned via <code>n2v_perc_pix</code>.
 
