@@ -2,21 +2,21 @@
 """
 <hr style="height:2px;">
 
-# Train your first CARE network (supervised)
+# Train your first CARE model (supervised)
 
-In this first example we will train a CARE network for a 2D denoising and upsampling task, where corresponding pairs of low and high signal-to-noise ratio (SNR) images of cells are available. Here the high SNR images are acquistions of Human U2OS cells taken from the [Broad Bioimage Benchmark Collection](https://data.broadinstitute.org/bbbc/BBBC006/) and the low SNR images were created by synthetically adding *strong read-out and shot-noise* and applying *pixel binning* of 2x2, thus mimicking acquisitions at a very low light level.
+In this first example we will train a CARE model for a 2D denoising and upsampling task, where corresponding pairs of low and high signal-to-noise ratio (SNR) images of cells are available. Here the high SNR images are acquisitions of Human U2OS cells taken from the [Broad Bioimage Benchmark Collection](https://data.broadinstitute.org/bbbc/BBBC006/) and the low SNR images were created by synthetically adding *strong read-out and shot-noise* and applying *pixel binning* of 2x2, thus mimicking acquisitions at a very low light level.
 
 ![](nb_material/denoising_binning_overview.png)
 
 
-For CARE image pairs should be registered, which in practice is best achieved by acquiring both stacks _interleaved_, i.e. as different channels that correspond to the different exposure/laser settings.
+For CARE, image pairs should be registered, which in practice is best achieved by acquiring both stacks _interleaved_, i.e. as different channels that correspond to the different exposure/laser settings.
 
-Since the image pairs were synthetically created in this example, they are already aligned perfectly.
+Since the image pairs were synthetically created in this example, they are already aligned perfectly. Note that when working with real paired acquisitions, the low and high SNR images are not pixel-perfect aligned so typically need to be co-registered before training a CARE model.
 
-To train a denoising network we will use the [CSB Deep Repo](https://github.com/CSBDeep/CSBDeep). This notebook has a very similar structure to the examples you can find there.
+To train a denoising network, we will use the [CSBDeep Repo](https://github.com/CSBDeep/CSBDeep). This notebook has a very similar structure to the examples you can find there.
 More documentation is available at http://csbdeep.bioimagecomputing.com/doc/.
 
-This part will no tasks to fill in in this exercise, but go through each cell and try to understand what's going on - it will help you in the next part! We also put some questions along the way. For some of them you might need to dig a bit deeper.
+This part will not have any coding tasks, but go through each cell and try to understand what's going on - it will help you in the next part! We also put some questions along the way. For some of them you might need to dig a bit deeper.
 
 <div class="alert alert-danger">
 Set your python kernel to <code>03_image_restoration_part1</code>
@@ -76,7 +76,7 @@ Let's look at an example pair of training images:
 y = imread("data/U2OS/train/GT/img_0010.tif")
 x = imread("data/U2OS/train/low/img_0010.tif")
 print("GT image size =", x.shape)
-print("low image size =", y.shape)
+print("low-SNR image size =", y.shape)
 
 # %%
 plt.figure(figsize=(13, 5))

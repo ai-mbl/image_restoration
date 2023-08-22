@@ -98,7 +98,7 @@ assert imgs.shape == x_size
 
 # %% [markdown]
 """
-As you can see the last image, which is the average of 4 images with 5us scantime, has the highest signal-to-noise-ratio. It is not noise-free but our best choice to be able to compare our results against quantitatively, so we will set it aside for that purpose.
+As you can see the last image, which is the average of 4 images with 5$\mu s$ scantime, has the highest signal-to-noise-ratio. It is not noise-free but our best choice to be able to compare our results against quantitatively, so we will set it aside for that purpose.
 """
 # %%
 scantimes, scantime_highSNR = scantimes_all[:-1], scantimes_all[-1]
