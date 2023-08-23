@@ -182,13 +182,13 @@ for i in range(2, 4):
 
 # %%
 ###TODO###
-# raw_data = RawData.from_folder (
-#    basepath    = 'data/SEM/train',
-#    source_dirs = [''], # fill in your directory for source images
-#    target_dir  = '', # fill in your directory of target images
-#    axes        = '', # what should the axes tag be?
-# )
-#
+raw_data = RawData.from_folder(
+    basepath="data/SEM/train",
+    source_dirs=[""],  # fill in your directory for source images
+    target_dir="",  # fill in your directory of target images
+    axes="",  # what should the axes tag be?
+)
+
 # %% tags=["solution"]
 raw_data = RawData.from_folder(
     basepath="data/SEM/train",
