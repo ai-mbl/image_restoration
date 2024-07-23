@@ -1,7 +1,7 @@
-# Image Regression: denoising and splitting
+# Image Restoration: denoising and splitting
 
 
-Welcome to the Image Regression exercises. In this part of the course, we will explore
+Welcome to the Image Restoration exercises. In this part of the course, we will explore
 how to use deep learning to denoise images, with examples of widely used algorithm for
 both supervised and unsupervised denoising. We will also explore the difference
 between unstructured and structured noise, or between UNet (which you are familiar with
