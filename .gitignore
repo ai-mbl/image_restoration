@@ -173,3 +173,5 @@ cython_debug/
 04_bonus_denoiSplit/tensorboard_logs/
 04_bonus_Noise2Noise/data/
 04_bonus_Noise2Noise/logs/
+04_DenoiSplit/denoiSplit/
+04_DenoiSplit/tensorboard_logs/
