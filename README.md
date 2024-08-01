@@ -31,12 +31,12 @@ jupyter lab
 
 1. [Context-aware restoration](01_CARE/care_exercise.ipynb)
 2. [Noise2Void](02_Noise2Void/n2v_exercise.ipynb)
-3. [COSDD](03_COSDD/exercise-1-training.ipynb)
+3. [COSDD](03_COSDD/exercise.ipynb)
+4. [DenoiSplit](04_DenoiSplit/denoisplit.ipynb)
 
 
 ## Bonus
 
-- [Image splitting with denoiSplit](04_bonus_denoiSplit/bonus_denoisplit.ipynb)
 - [Noise2Noise](04_bonus_Noise2Noise/n2n.ipynb)
 
 
