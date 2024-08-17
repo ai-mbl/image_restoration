@@ -22,22 +22,22 @@ jobs:
       - name: Build notebooks
         run: |
           jupyter nbconvert 01_CARE/care_solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output care_exercise.ipynb
           jupyter nbconvert 02_Noise2Void/n2v_solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output n2v_exercise.ipynb
           jupyter nbconvert 03_COSDD/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output exercise.ipynb
           jupyter nbconvert 03_COSDD/bonus-solution-generation.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output bonus-exercise.ipynb
           jupyter nbconvert 04_DenoiSplit/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output exercise.ipynb
           jupyter nbconvert 05_bonus_Noise2Noise/n2n_solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --to notebook \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output n2n_exercise.ipynb
 
       - uses: EndBug/add-and-commit@v9
