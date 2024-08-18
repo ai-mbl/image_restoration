@@ -163,16 +163,15 @@ cython_debug/
 
 *.ckpt
 01_CARE/runs/
-01_CARE/data/
-02_Noise2Void/data/
 02_Noise2Void/checkpoints/
 02_Noise2Void/logs/
 03_COSDD/data/
 03_COSDD/checkpoints/
 03_COSDD/COSDD
 04_bonus_denoiSplit/tensorboard_logs/
-04_bonus_Noise2Noise/data/
 04_bonus_Noise2Noise/logs/
 04_DenoiSplit/denoiSplit/
 04_DenoiSplit/tensorboard_logs/
 04_DenoiSplit/lightning_logs/
+05_bonus_Noise2Noise/logs/
+data/
