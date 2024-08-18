@@ -19,24 +19,16 @@ Please run the setup script to create the environment for these exercises and do
 source setup.sh
 ```
 
-
-When you are ready to start the exercise, make sure you are in the `05_image_restoration` environment and then run jupyter lab.
-
-``` bash
-conda activate 05_image_restoration
-jupyter lab
-```
-
 ## Exercises
 
 1. [Context-aware restoration](01_CARE/care_exercise.ipynb)
 2. [Noise2Void](02_Noise2Void/n2v_exercise.ipynb)
 3. [COSDD](03_COSDD/exercise.ipynb)
-4. [DenoiSplit](04_DenoiSplit/denoisplit.ipynb)
+4. [DenoiSplit](04_DenoiSplit/exercise.ipynb)
 
 
 ## Bonus
 
-- [Noise2Noise](04_bonus_Noise2Noise/n2n.ipynb)
+- [Noise2Noise](05_bonus_Noise2Noise/n2n_exercise.ipynb)
 
 
