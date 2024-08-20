@@ -17,6 +17,8 @@ if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     conda install -y pytorch-gpu cuda-toolkit=11.8 torchvision -c nvidia -c conda-forge -c pytorch
     #mamba install -y pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
     pip install jupytext black nbconvert scikit-learn ipykernel gdown "careamics[examples,tensorboard] @ git+https://github.com/CAREamics/careamics.git"
+    # Using pytorch-lightning 2.4.0 causes bugs in tensorboard and interupting training.
+    pip install pytorch-lightning==2.3.3
     pip install git+https://github.com/dlmbl/dlmbl-unet
     python -m ipykernel install --user --name "05_image_restoration"
     # Clone the extra repositories
