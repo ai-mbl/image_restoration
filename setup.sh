@@ -23,7 +23,7 @@ if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     python -m ipykernel install --user --name "05_image_restoration"
     # Clone the extra repositories
     git clone https://github.com/krulllab/COSDD.git -b n_dimensional 03_COSDD/COSDD
-    git clone https://github.com/juglab/denoiSplit.git
+    git clone https://github.com/juglab/denoiSplit.git 04_DenoiSplit/denoisplit
 
     # Download the data
     python download_careamics_portfolio.py
