@@ -37,6 +37,10 @@ if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     cd ER/
     gdown 1Bho6Oymfxi7OV0tPb9wkINkVOCpTaL7M
     cd ../../
+    mkdir 03_COSDD/checkpoints
+    cd 03_COSDD/checkpoints
+    gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
+    cd ../../
 fi
 
 
