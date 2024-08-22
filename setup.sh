@@ -16,7 +16,7 @@ fi
 if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     conda install -y pytorch-gpu cuda-toolkit=11.8 torchvision -c nvidia -c conda-forge -c pytorch
     #mamba install -y pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
-    pip install jupytext black nbconvert scikit-learn ipykernel gdown "careamics[examples,tensorboard] @ git+https://github.com/CAREamics/careamics.git"
+    pip install jupytext black nbconvert scikit-learn ipykernel gdown "careamics[examples,tensorboard] albumentations wandb ml_collections @ git+https://github.com/CAREamics/careamics.git"
     python -m ipykernel install --user --name "05_image_restoration"
 fi
 
@@ -35,3 +35,4 @@ cd ../
 mkdir ER/
 cd ER/
 gdown 1Bho6Oymfxi7OV0tPb9wkINkVOCpTaL7M
+cd ../..
