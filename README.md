@@ -23,7 +23,7 @@ source setup.sh
 
 1. [Context-aware restoration](01_CARE/care_exercise.ipynb)
 2. [Noise2Void](02_Noise2Void/n2v_exercise.ipynb)
-3. [COSDD](03_COSDD/exercise.ipynb)
+3. [Correlated and Signal Dependent Denoising (COSDD)](03_COSDD/exercise.ipynb)
 4. [DenoiSplit](04_DenoiSplit/exercise.ipynb)
 
 
