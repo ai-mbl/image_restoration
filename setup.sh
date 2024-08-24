@@ -44,12 +44,6 @@ if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     mkdir F-actin/
     cd F-actin/
     gdown 1FYO-Bpl5vjpiJ6kzV1qO1pL37Y3Dirfy
-    gdown 1DWcezoHxPClA1SDYdXKIHooiDiRldEyq
-    cd ../
-    mkdir F-actin_Nonlinear/
-    cd F-actin_Nonlinear/
-    gdown 1xwZH_XNbwXmq1HZGYXnePdRWP2yavgKg
-    gdown 1L_dpsEGWmMd4hEXbbmY8X2Gc-MMWUKLN
     cd ../../
     mkdir 03_COSDD/checkpoints
     cd 03_COSDD/checkpoints
