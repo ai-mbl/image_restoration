@@ -1,0 +1,45 @@
+name: Build Notebooks
+on:
+  push:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install jupytext nbconvert
+
+      - name: Build notebooks
+        run: |
+          jupyter nbconvert 01_CARE/solution.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output exercise.ipynb
+          jupyter nbconvert 02_Noise2Void/solution.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output exercise.ipynb
+          jupyter nbconvert 03_COSDD/solution.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output exercise.ipynb
+          jupyter nbconvert 03_COSDD/bonus-solution-generation.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output bonus-exercise.ipynb
+          jupyter nbconvert 04_DenoiSplit/solution.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output exercise.ipynb
+          jupyter nbconvert 05_bonus_Noise2Noise/n2n_solution.ipynb \
+            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
+            --output n2n_exercise.ipynb
+
+      - uses: EndBug/add-and-commit@v9
+        with:
+          add: "*.ipynb"
