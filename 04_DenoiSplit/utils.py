@@ -1,3 +1,4 @@
+from typing import Any
 from pathlib import Path
 from typing import Literal
 
@@ -37,13 +38,16 @@ def load_data(
 
 
 def get_train_val_data(
-    datadir,
+    data_config: Any,
+    datadir: str | Path,
     datasplit_type: DataSplitType,
-    val_fraction=None,
-    test_fraction=None,
+    val_fraction: float,
+    test_fraction: float,
+    structures: list[Literal["Nuclei", "Microtubules", "NucMembranes", "Centromeres"]],
+    **kwargs: Any,
 ) -> NDArray:
     """Split the data into train, validation, and test sets."""
-    data = load_data(datadir)
+    data = load_data(datadir, structures)
     train_idx, val_idx, test_idx = get_datasplit_tuples(
         val_fraction, test_fraction, len(data)
     )
