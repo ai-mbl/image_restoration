@@ -1,6 +1,6 @@
 from typing import Any
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 import numpy as np
 import torch
@@ -10,8 +10,10 @@ from microsplit_reproducibility.datasets.custom_dataset_2D import load_one_file
 from microsplit_reproducibility.utils.paper_metrics import avg_range_inv_psnr, compute_SE, _get_list_of_images_from_gt_pred
 from microssim import MicroMS3IM, MicroSSIM
 from numpy.typing import NDArray
+from skimage.measure import pearson_corr_coeff
 from skimage.metrics import structural_similarity
 from torchmetrics.image import MultiScaleStructuralSimilarityIndexMeasure
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 
 def load_data(
@@ -70,15 +72,107 @@ def get_train_val_data(
     return data
 
 
-def compute_metrics(highres_data: list[torch.Tensor], pred_unnorm: list[torch.Tensor], verbose=True):
+def _normalize_for_lpips(imgs: list[NDArray]) -> list[NDArray]:
+    """Normalize the given image in [0, 1] for LPIPS.
+    
+    Parameters
+    ----------
+    img : NDArray
+        A list of multi-channels images to normalize, each one of shape (C, Z, Y, X).
+    
+    Returns
+    -------
+    NDArray
+        The normalized image.
+    """
+    # TODO: use training dset stats for normalization (?)
+    ax_idxs = tuple(range(1, imgs[0].ndim))
+    min_ = np.min([img.min(axis=ax_idxs) for img in imgs])
+    max_ = np.max([img.max(axis=ax_idxs) for img in imgs])
+    min_ = np.asarray(min_).reshape(-1, *np.ones_like(ax_idxs, dtype=int))
+    max_ = np.asarray(max_).reshape(-1, *np.ones_like(ax_idxs, dtype=int))
+    return [(img - min_) / (max_ - min_) for img in imgs]
+
+
+def lpips(
+    prediction: Union[np.ndarray, torch.Tensor], 
+    target: Union[np.ndarray, torch.Tensor]
+) -> float:
+    """Compute the Learned Perceptual Image Patch Similarity (LPIPS) over images.
+    
+    If inputs are 3D, LPIPS is averaged over the Z-stack.
+    
+    NOTES:
+    - LPIPS can use different networks. Here we use the SqueezeNet model.
+    - The inputs are expected to be normalized in the range [0, 1].
+    - We use the mean reduction, i.e., the LPIPS value is averaged over the batch.
+
+    Parameters
+    ----------
+    prediction : Union[np.ndarray, torch.Tensor]
+        Array of predicted images, shape is (N, C, [Z], Y, X).
+    target : Union[np.ndarray, torch.Tensor]
+        Array of ground truth images, shape is (N, C, [Z], Y, X).
+
+    Returns
+    -------
+    float
+        LPIPS value over the batch.
+    """
+    assert prediction.shape == target.shape, "Prediction and target shapes must match."
+    assert prediction.max() <= 1 and prediction.min() >= 0, (
+        "Prediction must be normalized in [0, 1]."
+    )
+    assert target.max() <= 1 and target.min() >= 0, (
+        "Target must be normalized in [0, 1]."
+    )
+    
+    # check if GPU is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    # compute LPIPS
+    lpips = LearnedPerceptualImagePatchSimilarity(
+        net_type='squeeze', reduction='mean', normalize=True
+    ).to(device)
+    
+    if len(prediction.shape) == 5: # 3D input
+        # iterate over Z-stack
+        return np.mean([
+            lpips(
+                torch.tensor(prediction[:, :, i], device=device, dtype=torch.float32),
+                torch.tensor(target[:, :, i], device=device, dtype=torch.float32)
+            ).item()
+            for i in range(prediction.shape[2])
+        ])
+    else:
+        return lpips(
+            torch.tensor(prediction, device=device, dtype=torch.float32),
+            torch.tensor(target, device=device, dtype=torch.float32)
+        ).item()
+
+
+def ssim_str(ssim_tmp):
+    return f"{np.round(ssim_tmp[0], 3):.3f} ± {np.round(ssim_tmp[1], 3):.3f}"
+
+def psnr_str(psnr_tmp):
+    return f"{np.round(psnr_tmp[0], 2)} ± {np.round(psnr_tmp[1], 3)}"
+
+def compute_metrics(
+    highres_data,
+    pred_unnorm,
+    metrics,
+):
     """
     last dimension is the channel dimension
     """
+    mse_list = []
     psnr_list = []
+    pearson_list = []
     microssim_list = []
     ms3im_list = []
     ssim_list = []
     msssim_list = []
+    lpips_list = []
     for ch_idx in range(highres_data[0].shape[-1]):
         # list of gt and prediction images. This handles both 2D and 3D data. 
         # This also handles when individual images are lists.
@@ -87,67 +181,100 @@ def compute_metrics(highres_data: list[torch.Tensor], pred_unnorm: list[torch.Te
         )
         
         # PSNR
-        psnr_list.append(avg_range_inv_psnr(gt_ch, pred_ch))
+        if "PSNR" in metrics:
+            psnr_list.append(avg_range_inv_psnr(gt_ch, pred_ch))
+            print(
+                "PSNR:", "\t".join([psnr_str(psnr_tmp) for psnr_tmp in psnr_list])
+            )
 
         # MicroSSIM
-        microssim_obj = MicroSSIM()
-        microssim_obj.fit(gt_ch, pred_ch)
-        mssim_scores = [
-            microssim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
-        ]
-        microssim_list.append((np.mean(mssim_scores), compute_SE(mssim_scores)))
+        if "MicroSSIM" in metrics:
+            microssim_obj = MicroSSIM()
+            microssim_obj.fit(gt_ch, pred_ch)
+            mssim_scores = [
+                microssim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
+            ]
+            microssim_list.append((np.mean(mssim_scores), compute_SE(mssim_scores)))
+            print(
+                "MicroSSIM:",
+                "\t".join([ssim_str(ssim) for ssim in microssim_list]),
+            )
 
         # MicroS3IM
-        m3sim_obj = MicroMS3IM()
-        m3sim_obj.fit(gt_ch, pred_ch)
-        ms3im_scores = [
-            m3sim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
-        ]
-        ms3im_list.append((np.mean(ms3im_scores), compute_SE(ms3im_scores)))
+        if "MicroS3IM" in metrics:
+            m3sim_obj = MicroMS3IM()
+            m3sim_obj.fit(gt_ch, pred_ch)
+            ms3im_scores = [
+                m3sim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
+            ]
+            ms3im_list.append((np.mean(ms3im_scores), compute_SE(ms3im_scores)))
+            print(
+                "MicroS3IM:", "\t".join([ssim_str(ssim) for ssim in ms3im_list])
+            )
         
         # SSIM
-        ssim = [
-            structural_similarity(
-                gt_ch[i], pred_ch[i], data_range=gt_ch[i].max() - gt_ch[i].min()
-            )
-            for i in range(len(gt_ch))
-        ]
-        ssim_list.append((np.mean(ssim), compute_SE(ssim)))
-        
+        if "SSIM" in metrics:
+            ssim = [
+                structural_similarity(
+                    gt_ch[i], pred_ch[i], data_range=gt_ch[i].max() - gt_ch[i].min()
+                )
+                for i in range(len(gt_ch))
+            ]
+            ssim_list.append((np.mean(ssim), compute_SE(ssim)))
+            print("SSIM:", "\t".join([ssim_str(ssim) for ssim in ssim_list]))
+
         # MSSSIM
-        ms_ssim = []
-        for i in range(len(gt_ch)):
-            ms_ssim_obj = MultiScaleStructuralSimilarityIndexMeasure(
-                data_range=gt_ch[i].max() - gt_ch[i].min()
+        if "MSSSIM" in metrics:
+            ms_ssim = []
+            for i in range(len(gt_ch)):
+                ms_ssim_obj = MultiScaleStructuralSimilarityIndexMeasure(
+                    data_range=gt_ch[i].max() - gt_ch[i].min()
+                )
+                ms_ssim.append(
+                    ms_ssim_obj(
+                        torch.Tensor(pred_ch[i][None, None]),
+                        torch.Tensor(gt_ch[i][None, None]),
+                    ).item()
+                )
+            msssim_list.append((np.mean(ms_ssim), compute_SE(ms_ssim)))
+            print("MSSSIM:", "\t".join([ssim_str(ssim) for ssim in msssim_list]))
+
+        # Pearson's Correlation Coefficient
+        if "Pearson" in metrics:
+            pearson_scores = [
+                pearson_corr_coeff(gt_ch[i].flatten(), pred_ch[i].flatten())
+                for i in range(len(gt_ch))
+            ]
+            pearson_list.append((np.mean(pearson_scores), compute_SE(pearson_scores)))
+            print(
+                "Pearson:",
+                "\t".join([ssim_str(ssim) for ssim in pearson_list]),
             )
-            ms_ssim.append(
-                ms_ssim_obj(
-                    torch.Tensor(pred_ch[i][None, None]),
-                    torch.Tensor(gt_ch[i][None, None]),
-                ).item()
+            
+        # LPIPS
+        if "LPIPS" in metrics:
+            lpips_scores = []
+            for i in range(len(gt_ch)):
+                # inputs are expected to be RGB + have batch dimension
+                curr_target = np.repeat(
+                    gt_ch[i][None, ...], repeats=3, axis=0
+                )[None, ...]
+                curr_pred = np.repeat(
+                    pred_ch[i][None, ...], repeats=3, axis=0
+                )[None, ...]
+                curr_target = _normalize_for_lpips([curr_target])
+                curr_pred = _normalize_for_lpips([curr_pred])
+                lpips_scores.append(
+                    lpips(
+                        prediction=curr_pred,
+                        target=curr_target
+                    )
+                )
+            lpips_list.append((np.mean(lpips_scores), compute_SE(lpips_scores)))
+            print(
+                "LPIPS:",
+                "\t".join([ssim_str(ssim) for ssim in lpips_list]),
             )
-        msssim_list.append((np.mean(ms_ssim), compute_SE(ms_ssim)))
-    
-    if verbose:
-
-        def ssim_str(ssim_tmp):
-            return f"{np.round(ssim_tmp[0], 3):.3f}+-{np.round(ssim_tmp[1], 3):.3f}"
-
-        def psnr_str(psnr_tmp):
-            return f"{np.round(psnr_tmp[0], 2)}+-{np.round(psnr_tmp[1], 3)}"
-
-        print(
-            "PSNR on Highres", "\t".join([psnr_str(psnr_tmp) for psnr_tmp in psnr_list])
-        )
-        print(
-            "MicroSSIM on Highres",
-            "\t".join([ssim_str(ssim) for ssim in microssim_list]),
-        )
-        print(
-            "MicroS3IM on Highres", "\t".join([ssim_str(ssim) for ssim in ms3im_list])
-        )
-        print("SSIM on Highres", "\t".join([ssim_str(ssim) for ssim in ssim_list]))
-        print("MSSSIM on Highres", "\t".join([ssim_str(ssim) for ssim in msssim_list]))
 
     return {
         "rangeinvpsnr": psnr_list,
