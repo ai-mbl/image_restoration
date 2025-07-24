@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Literal, Union
 
 import numpy as np
+import pytorch_lightning as pl
 import torch
 from careamics.lvae_training.dataset import DataSplitType
 from careamics.lvae_training.dataset.utils.data_utils import get_datasplit_tuples
@@ -16,6 +17,13 @@ from torchmetrics.image import MultiScaleStructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 
+STRUCTURE_2_INDEX = {
+    "Nuclei": 0,
+    "Microtubules": 1,
+    "NucMembranes": 2,
+    "Centromeres": 3,
+}
+
 def load_data(
     datadir: str | Path,
     structures: list[Literal["Nuclei", "Microtubules", "NucMembranes", "Centromeres"]],
@@ -24,9 +32,11 @@ def load_data(
     data_path = Path(datadir)
     
     # pick only directories that match the structures
-    channel_dirs = sorted(
-        p for p in data_path.iterdir() if p.is_dir() and p.name in structures
-    )
+    channel_dirs = [
+        data_path / structure for structure in structures
+        if (data_path / structure).is_dir() and
+        (data_path / structure) in data_path.iterdir() 
+    ]
 
     channels_data: list[NDArray] = []
     for channel_dir in channel_dirs:
@@ -150,13 +160,6 @@ def lpips(
             torch.tensor(target, device=device, dtype=torch.float32)
         ).item()
 
-
-def ssim_str(ssim_tmp):
-    return f"{np.round(ssim_tmp[0], 3):.3f} ± {np.round(ssim_tmp[1], 3):.3f}"
-
-def psnr_str(psnr_tmp):
-    return f"{np.round(psnr_tmp[0], 2)} ± {np.round(psnr_tmp[1], 3)}"
-
 def compute_metrics(
     highres_data,
     pred_unnorm,
@@ -165,7 +168,6 @@ def compute_metrics(
     """
     last dimension is the channel dimension
     """
-    mse_list = []
     psnr_list = []
     pearson_list = []
     microssim_list = []
@@ -183,9 +185,6 @@ def compute_metrics(
         # PSNR
         if "PSNR" in metrics:
             psnr_list.append(avg_range_inv_psnr(gt_ch, pred_ch))
-            print(
-                "PSNR:", "\t".join([psnr_str(psnr_tmp) for psnr_tmp in psnr_list])
-            )
 
         # MicroSSIM
         if "MicroSSIM" in metrics:
@@ -195,22 +194,15 @@ def compute_metrics(
                 microssim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
             ]
             microssim_list.append((np.mean(mssim_scores), compute_SE(mssim_scores)))
-            print(
-                "MicroSSIM:",
-                "\t".join([ssim_str(ssim) for ssim in microssim_list]),
-            )
 
         # MicroS3IM
-        if "MicroS3IM" in metrics:
+        if "MicroMS3IM" in metrics:
             m3sim_obj = MicroMS3IM()
             m3sim_obj.fit(gt_ch, pred_ch)
             ms3im_scores = [
                 m3sim_obj.score(gt_ch[i], pred_ch[i]) for i in range(len(gt_ch))
             ]
             ms3im_list.append((np.mean(ms3im_scores), compute_SE(ms3im_scores)))
-            print(
-                "MicroS3IM:", "\t".join([ssim_str(ssim) for ssim in ms3im_list])
-            )
         
         # SSIM
         if "SSIM" in metrics:
@@ -221,10 +213,9 @@ def compute_metrics(
                 for i in range(len(gt_ch))
             ]
             ssim_list.append((np.mean(ssim), compute_SE(ssim)))
-            print("SSIM:", "\t".join([ssim_str(ssim) for ssim in ssim_list]))
 
         # MSSSIM
-        if "MSSSIM" in metrics:
+        if "MS-SSIM" in metrics:
             ms_ssim = []
             for i in range(len(gt_ch)):
                 ms_ssim_obj = MultiScaleStructuralSimilarityIndexMeasure(
@@ -237,19 +228,14 @@ def compute_metrics(
                     ).item()
                 )
             msssim_list.append((np.mean(ms_ssim), compute_SE(ms_ssim)))
-            print("MSSSIM:", "\t".join([ssim_str(ssim) for ssim in msssim_list]))
 
         # Pearson's Correlation Coefficient
         if "Pearson" in metrics:
             pearson_scores = [
-                pearson_corr_coeff(gt_ch[i].flatten(), pred_ch[i].flatten())
+                pearson_corr_coeff(gt_ch[i], pred_ch[i])
                 for i in range(len(gt_ch))
             ]
             pearson_list.append((np.mean(pearson_scores), compute_SE(pearson_scores)))
-            print(
-                "Pearson:",
-                "\t".join([ssim_str(ssim) for ssim in pearson_list]),
-            )
             
         # LPIPS
         if "LPIPS" in metrics:
@@ -271,15 +257,39 @@ def compute_metrics(
                     )
                 )
             lpips_list.append((np.mean(lpips_scores), compute_SE(lpips_scores)))
-            print(
-                "LPIPS:",
-                "\t".join([ssim_str(ssim) for ssim in lpips_list]),
-            )
 
     return {
-        "rangeinvpsnr": psnr_list,
-        "microssim": microssim_list,
-        "ms3im": ms3im_list,
-        "ssim": ssim_list,
-        "msssim": msssim_list,
+        "PSNR": psnr_list,
+        "Pearson": pearson_list,
+        "MicroSSIM": microssim_list,
+        "MicroS3IM": ms3im_list,
+        "SSIM": ssim_list,
+        "MSSSIM": msssim_list,
+        "LPIPS": lpips_list,
     }
+    
+
+def show_metrics(metrics_dict: dict[str]):
+    print("---------------------------------------")
+    for metric_name, values in metrics_dict.items():
+        if not values:
+            continue
+        print(f"{metric_name}:")
+        for i, (value, se) in enumerate(values):
+            print(f"- Ch{i + 1}: {value:.3f} ± {se:.3f}")
+
+
+def get_device():
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
+
+
+def load_pretrained_model(model: pl.LightningModule, ckpt_path: str) -> None:
+    device = get_device()
+    ckpt_dict = torch.load(ckpt_path, map_location=device, weights_only=True)
+    model.model.load_state_dict(ckpt_dict["state_dict"], strict=False)
+    print(f"Loaded model from {ckpt_path}")
