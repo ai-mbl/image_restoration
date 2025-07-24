@@ -72,7 +72,7 @@ def get_train_val_data(
     return data
 
 
-def _normalize_for_lpips(imgs: list[NDArray]) -> list[NDArray]:
+def _normalize_for_lpips(imgs: list[NDArray]) -> NDArray:
     """Normalize the given image in [0, 1] for LPIPS.
     
     Parameters
@@ -91,7 +91,7 @@ def _normalize_for_lpips(imgs: list[NDArray]) -> list[NDArray]:
     max_ = np.max([img.max(axis=ax_idxs) for img in imgs])
     min_ = np.asarray(min_).reshape(-1, *np.ones_like(ax_idxs, dtype=int))
     max_ = np.asarray(max_).reshape(-1, *np.ones_like(ax_idxs, dtype=int))
-    return [(img - min_) / (max_ - min_) for img in imgs]
+    return np.array([(img - min_) / (max_ - min_) for img in imgs])
 
 
 def lpips(
@@ -258,10 +258,10 @@ def compute_metrics(
                 # inputs are expected to be RGB + have batch dimension
                 curr_target = np.repeat(
                     gt_ch[i][None, ...], repeats=3, axis=0
-                )[None, ...]
+                )
                 curr_pred = np.repeat(
                     pred_ch[i][None, ...], repeats=3, axis=0
-                )[None, ...]
+                )
                 curr_target = _normalize_for_lpips([curr_target])
                 curr_pred = _normalize_for_lpips([curr_pred])
                 lpips_scores.append(
