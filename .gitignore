@@ -170,8 +170,10 @@ cython_debug/
 03_COSDD/COSDD
 04_bonus_denoiSplit/tensorboard_logs/
 04_bonus_Noise2Noise/logs/
-04_DenoiSplit/denoisplit/
-04_DenoiSplit/tensorboard_logs/
-04_DenoiSplit/lightning_logs/
+04_MicroSplit/MicroSplit_MBL_2025/
+04_MicroSplit/tb_logs/
+04_MicroSplit/lightning_logs/
 05_bonus_Noise2Noise/logs/
 data/
+ckpts/
+noise_models/
