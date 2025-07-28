@@ -20,15 +20,18 @@ source setup.sh
 ## Exercises
 The first exercise, [1. Context-aware restoration (CARE)](01_CARE/exercise.ipynb), is mandatory. It will introduce you to deep learning image restoration by training a UNet for denoising.
 
-When you reach the end of the first exercise, choose your next exercise from the following.
+When you reach the end of the first exercise, choose your next exercise from the following:
 
 [2. Noise2Void (N2V)](02_Noise2Void/exercise.ipynb).
-This exercise will introduce a denoiser that can learn to denoise using only noisy training data.
+This exercise will introduce a denoiser that is trained using only noisy data.
 Unlike CARE, it doesn't need any examples of clean images.
 It's also relatively quick to train.
 But there's a catch.
 It relies on the assumption that the noise is unstructured.
 Unstructured noise is uncorrelated over pixels, so has no streaky or line artifacts.
+An example is shown below.
+
+<img src="./02_Noise2Void/imgs/unstructured noise.png">
 
 [3. COSDD](03_COSDD/exercise.ipynb). 
 This exercise will introduce another denoiser that is trained using unpaired noisy images, but can handle a specific form of structure.
@@ -36,10 +39,15 @@ That structure is row correlation.
 Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy.
 It can also be found when using sCMOS sensors.
 The practical trade-off with N2V is that COSDD takes much longer to train.
+An example of row-correlated noise is shown below.
+
+<img src="./03_COSDD/resources/structured noise.png">
 
 [4. MicroSplit](04_MicroSplit/exercise.ipynb).
 This exercise introduces a method that not only learns to denoise images, but also performs computational unmixing.
 Specifically, it uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into as many as four.
 Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
+An example of splitting is shown below.
 
+<img src="./04_MicroSplit/imgs/Fig1_b.png">
 
