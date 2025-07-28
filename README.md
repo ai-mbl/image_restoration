@@ -18,15 +18,28 @@ source setup.sh
 ```
 
 ## Exercises
+The first exercise, [1. Context-aware restoration (CARE)](01_CARE/exercise.ipynb), is mandatory. It will introduce you to deep learning image restoration by training a UNet for denoising.
 
-1. [Context-aware restoration](01_CARE/care_exercise.ipynb)
-2. [Noise2Void](02_Noise2Void/n2v_exercise.ipynb)
-3. [Correlated and Signal Dependent Denoising (COSDD)](03_COSDD/exercise.ipynb)
-4. [MicroSplit](04_MicroSplit/exercise.ipynb)
+When you reach the end of the first exercise, choose your next exercise from the following.
 
+[2. Noise2Void (N2V)](02_Noise2Void/exercise.ipynb).
+This exercise will introduce a denoiser that can learn to denoise using only noisy training data.
+Unlike CARE, it doesn't need any examples of clean images.
+It's also relatively quick to train.
+But there's a catch.
+It relies on the assumption that the noise is unstructured.
+Unstructured noise is uncorrelated over pixels, so has no streaky or line artifacts.
 
-## Bonus
+[3. COSDD](03_COSDD/exercise.ipynb). 
+This exercise will introduce another denoiser that is trained using unpaired noisy images, but can handle a specific form of structure.
+That structure is row correlation.
+Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy.
+It can also be found when using sCMOS sensors.
+The practical trade-off with N2V is that COSDD takes much longer to train.
 
-- [Noise2Noise](05_bonus_Noise2Noise/n2n_exercise.ipynb)
+[4. MicroSplit](04_MicroSplit/exercise.ipynb).
+This exercise introduces a method that not only learns to denoise images, but also performs computational unmixing.
+Specifically, it uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into as many as four.
+Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
 
 
