@@ -23,23 +23,6 @@ jobs:
         run: |
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py --output 01_CARE/exercise.ipynb
-
-          jupyter nbconvert 02_Noise2Void/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output exercise.ipynb
-          jupyter nbconvert 03_COSDD/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output exercise.ipynb
-          jupyter nbconvert 03_COSDD/bonus-solution-generation.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output bonus-exercise.ipynb
-          jupyter nbconvert 04_DenoiSplit/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output exercise.ipynb
-          jupyter nbconvert 05_bonus_Noise2Noise/n2n_solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output n2n_exercise.ipynb
-
       - uses: EndBug/add-and-commit@v9
         with:
           add: "*.ipynb"
