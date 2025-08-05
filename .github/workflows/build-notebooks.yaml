@@ -21,9 +21,9 @@ jobs:
 
       - name: Build notebooks
         run: |
-          jupyter nbconvert 01_CARE/solution.ipynb \
-            --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
-            --output exercise.ipynb
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py --output 01_CARE/exercise.ipynb
+
           jupyter nbconvert 02_Noise2Void/solution.ipynb \
             --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --to notebook \
             --output exercise.ipynb
