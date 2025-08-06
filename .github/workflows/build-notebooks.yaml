@@ -25,6 +25,8 @@ jobs:
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py --output 01_CARE/exercise.ipynb
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 02_Noise2Void/solution.py
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 02_Noise2Void/solution.py --output 02_Noise2Void/exercise.ipynb
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/solution.py
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/solution.py --output 03_COSDD/exercise.ipynb
       - uses: EndBug/add-and-commit@v9
         with:
           add: "*.ipynb"
