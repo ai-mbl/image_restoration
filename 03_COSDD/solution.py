@@ -134,9 +134,9 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # ### Question 2.1.
 #
 # Below are three examples of noise. Beneath each is an autocorrelation plot showing how they are spatially correlated.
-# Identify which noise examples could be removed by:
-# (a) COSDD
-# (b) Noise2Void
+# Identify which noise examples could be removed by:<br>
+# (a) COSDD<br>
+# (b) Noise2Void<br>
 # (c) neither
 # </div>
 
@@ -144,8 +144,8 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # <img src="resources/ac-question.png"/>
 
 # %% [markdown] tags=["solution"]
-# 1: COSDD and Noise2Void
-# 2: COSDD
+# 1: COSDD and Noise2Void<br>
+# 2: COSDD<br>
 # 3: Neither
 
 # %% [markdown] tags=[]
@@ -271,10 +271,11 @@ display(layout)
 # </div>
 
 # %% [markdown] tags=[]
-# `batch_size` (int): Number of images passed through the network at a time. 
-# `n_grad_batches` (int): Number of batches to pass through the network before updating parameters.
-# `crop_size` (tuple(int)): The size of randomly cropped patches. Should be less than the dimensions of your images.
+# `batch_size` (int): Number of images passed through the network at a time. <br>
+# `n_grad_batches` (int): Number of batches to pass through the network before updating parameters. <br>
+# `crop_size` (tuple(int)): The size of randomly cropped patches. Should be less than the dimensions of your images. <br>
 # `train_split` (0 < float < 1): Fraction of images to be used in the training set, with the remainder used for the validation set.
+#
 
 # %% tags=["task"]
 real_batch_size = 4

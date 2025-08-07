@@ -1,4 +1,4 @@
-# # %% tags=["solution", "task"]
+# %% tags=["solution", "task"]
 # ruff: noqa: F811
 # %% [markdown] tags=[]
 # # Content-aware image restoration
@@ -34,7 +34,6 @@
 # </div>
 
 # %% tags=[]
-# %matplotlib inline
 import tifffile
 import numpy as np
 from pathlib import Path
@@ -47,6 +46,8 @@ import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from dlmbl_unet import UNet
+
+# %matplotlib inline
 
 
 # %% [markdown] jp-MarkdownHeadingCollapsed=true

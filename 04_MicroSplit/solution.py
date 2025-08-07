@@ -40,7 +40,7 @@
 # Set your python kernel to <code>05_image_restoration</code>
 # </div>
 
-# %% [markdown] tags=[]
+# %% [markdown] tags=["solution"]
 # <div class="alert">
 # Note for reviewers: dataset can be reduced to have faster training and inference!
 # </div>
@@ -130,7 +130,16 @@ torch.set_float32_matmul_precision('medium')
 # You can play with these parameters and check MicroSplit performance with different combinations.
 # </div>
 
-# %% tags=["solution", "task"]
+# %% tags=["task"]
+# pick structures and exposure time
+STRUCTURES = ... # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
+EXPOSURE_TIME = ... # in ms, choose among 2, 20, 500 (expressed in ms)
+
+assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
+assert all([
+    s in ["Nuclei", "Microtubules", "NucMembranes", "Centromeres"] for s in STRUCTURES
+]), "Invalid structure selected. Choose among 'Nuclei', 'Microtubules', 'NucMembranes', 'Centromeres'."
+# %% tags=["solution"]
 # pick structures and exposure time
 STRUCTURES = ["Nuclei", "Microtubules"] # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
 EXPOSURE_TIME = 500 # in ms, choose among 2, 20, 500 (expressed in ms)
@@ -191,7 +200,7 @@ val_dloader = DataLoader(
 #
 # ***Tip:*** the following functions shows a few samples of the prepared training data. In case you don't like what you see (empty or noisy patches), execute the cell again. Different randomly chosen patches will be shown!</div>
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Question 1.1.</b></h4>
 #
 # - Can you tell in which part of the model the different patches shown below are used?
@@ -208,7 +217,7 @@ val_dloader = DataLoader(
 # %% tags=[]
 plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples=3, patch_size=64)
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Question 1.1.bis</b></h4>
 #
 # Below are 2 examples of superimposed labeled structures with the correspondent ground truths. 
@@ -277,8 +286,25 @@ paths_to_noise_models = [
 
 # %% [markdown] tags=[]
 # Set other parameters
+# %% tags=["task"]
+# setting up MicroSplit parametrization
+experiment_params = SplittingParameters(
+    algorithm="denoisplit",
+    loss_type="denoisplit_musplit",
+    img_size=(64, 64), # this should be consistent with the dataset
+    target_channels=len(STRUCTURES),
+    multiscale_count=3,
+    lr=1e-3,
+    num_epochs=..., # <- you can modify this
+    lr_scheduler_patience=..., # <- you can modify this (note: if you want this to work, must be less than num_epochs)
+    earlystop_patience=..., # <- you can modify this (note: if you want this to work, must be less than num_epochs)
+    nm_paths=paths_to_noise_models,
+).model_dump()
 
-# %% tags=["solution", "task"]
+# add data stats for standardization
+experiment_params["data_stats"] = data_stats
+
+# %% tags=["solution"]
 # setting up MicroSplit parametrization
 experiment_params = SplittingParameters(
     algorithm="denoisplit",
@@ -386,7 +412,11 @@ trainer.fit(
 #
 # In this framework, the parameter `mmse_count : (int)` determines the number of samples (predictions) generated for any given input patch. A larger value allows to get smoother predictions, also limiting recurring issues such as *tiling artefacts*. However, it obviously increases the time and cost of the computation. Generally, a value of `> 5` is enough to get decently smooth predicted frames. For reference, in our papers we often use values of 50 to get the best results. 
 
-# %% tags=[]
+# %% tags=["task"]
+MMSE_COUNT = ...
+"""The number of MMSE samples to use for the splitting predictions."""
+
+# %% tags=["solution"]
 MMSE_COUNT = 2
 """The number of MMSE samples to use for the splitting predictions."""
 
@@ -479,8 +509,12 @@ print("✅ Selected model checkpoint:", selected_ckpt)
 # As we said, you can choose your desired exposure time. Structures will be set to `"Microtubules", "NucMembranes", "Centromeres"`.
 #
 # </div>
+# %% tags=["task"]
+EXPOSURE_TIME = ... # in ms, choose among 2, 20, 500 (expressed in ms)
 
-# %% tags=["solution", "task"]
+assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
+
+# %% tags=["solution"]
 EXPOSURE_TIME = 2 # in ms, choose among 2, 20, 500 (expressed in ms)
 
 assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
@@ -578,7 +612,13 @@ load_pretrained_model(model, selected_ckpt)
 # - Set `INNER_TILE_SIZE` parameter, trying different values for inner padding. Also here notice that a smaller `INNER_TILE_SIZE` entails larger padding/overlap between neighboring patches and, hence, more predictions to be done. A reasonable range to try is `[16, 64]`, where `64` means that no padding is done (recall, we used a patch size of `64`).
 # </div>
 
-# %% tags=["solution", "task"]
+# %% tags=["task"]
+MMSE_COUNT = ...
+"""The number of MMSE samples to use for the splitting predictions."""
+INNER_TILE_SIZE = ...
+"""The inner tile size considered for the predictions."""
+
+# %% tags=["solution"]
 MMSE_COUNT = 2
 """The number of MMSE samples to use for the splitting predictions."""
 INNER_TILE_SIZE = 32
@@ -639,8 +679,50 @@ full_frame_evaluation(stitched_predictions[frame_idx], tar[frame_idx], inp[frame
 
 # %% [markdown] tags=[]
 # #### (ii) Random crops visualization
+# %% tags=["task"]
+# --- Insert here the crop size for visualization ---
+img_sz = ...
+# ---
 
-# %% tags=[]
+rand_locations = pick_random_patches_with_content(tar, img_sz)
+h_start = rand_locations[
+    2, 0
+]  # np.random.randint(stitched_predictions.shape[1] - img_sz)
+w_start = rand_locations[
+    2, 1
+]  # np.random.randint(stitched_predictions.shape[2] - img_sz)
+
+ncols = 1 + 2 * stitched_predictions.shape[-1]
+nrows = min(len(rand_locations), 5)
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * 3, nrows * 3))
+
+for i, (h_start, w_start) in enumerate(rand_locations[:nrows]):
+    ax[i, 0].imshow(inp[0, h_start : h_start + img_sz, w_start : w_start + img_sz])
+    for j in range(ncols // 2):
+        # vmin = stitched_predictions[..., j].min()
+        # vmax = stitched_predictions[..., j].max()
+        ax[i, 2 * j + 1].imshow(
+            tar[0, h_start : h_start + img_sz, w_start : w_start + img_sz, j],
+            # vmin=vmin,
+            # vmax=vmax,
+        )
+        ax[i, 2 * j + 2].imshow(
+            stitched_predictions[
+                0, h_start : h_start + img_sz, w_start : w_start + img_sz, j
+            ],
+            # vmin=vmin,
+            # vmax=vmax,
+        )
+
+ax[0, 0].set_title("Primary Input")
+for i in range(ncols // 2):  # 2 channel splitting
+    ax[0, 2 * i + 1].set_title(f"Target Channel {i+1}")
+    ax[0, 2 * i + 2].set_title(f"Predicted Channel {i+1}")
+
+# reduce the spacing between the subplots
+plt.subplots_adjust(wspace=0.03, hspace=0.03)
+clean_ax(ax)
+# %% tags=["solution"]
 # --- Insert here the crop size for visualization ---
 img_sz = 128
 # ---
@@ -687,7 +769,48 @@ clean_ax(ax)
 # %% [markdown] tags=[]
 # #### (iii) Custom crop visualization
 
-# %% tags=[]
+# %% tags=["task"]
+# --- Pick coordinates of upper-left corner and crop size ---
+y_start = ...
+x_start = ...
+crop_size = ...
+#--------------
+assert y_start + crop_size <= stitched_predictions.shape[1], f"y_start + crop_size exceeds image height, which is {stitched_predictions.shape[1]}"
+assert x_start + crop_size <= stitched_predictions.shape[2], f"x_start + crop_size exceeds image width, which is {stitched_predictions.shape[2]}"
+
+ncols = 1 + stitched_predictions.shape[-1]
+nrows = 2
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * 5, nrows * 5), constrained_layout=True)
+ax[0, 0].imshow(inp[0, y_start : y_start + crop_size, x_start : x_start + crop_size])
+for i in range(ncols - 1):
+    # vmin = stitched_predictions[..., i].min()
+    # vmax = stitched_predictions[..., i].max()
+    ax[0, i + 1].imshow(
+        tar[0, y_start : y_start + crop_size, x_start : x_start + crop_size, i],
+        # vmin=vmin,
+        # vmax=vmax,
+    )
+    ax[1, i + 1].imshow(
+        stitched_predictions[
+            0, y_start : y_start + crop_size, x_start : x_start + crop_size, i
+        ],
+        # vmin=vmin,
+        # vmax=vmax,
+    )
+    ax[0, i + 1].set_title(f"Channel {i+1}", fontsize=15)
+
+# disable the axis for ax[1,0]
+ax[1, 0].axis("off")
+ax[0, 0].set_title("Input", fontsize=15)
+# set y labels on the right for ax[0,2]
+ax[0,ncols-1].yaxis.set_label_position("right")
+ax[0,ncols-1].set_ylabel("Target", fontsize=15)
+
+ax[1,ncols-1].yaxis.set_label_position("right")
+ax[1,ncols-1].set_ylabel("Predicted", fontsize=15)
+
+print("Here the crop you selected:")
+# %% tags=["solution"]
 # --- Pick coordinates of upper-left corner and crop size ---
 y_start = 750
 x_start = 750
@@ -736,7 +859,7 @@ print("Here the crop you selected:")
 #
 # </div>
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
 #
 # In this and other exercises we spoke of "tiling artefacts". These are generally due to a mismatch in the predictions of adjacent tiles/patches. In the context of CNN and, specifically, VAE-based models, can you think about reasons why we have such effect?
@@ -764,7 +887,7 @@ print("Here the crop you selected:")
 # *Hint*: there are no absolutely good and bad metrics. All the metrics are useful! They key is to understand *what they are telling you*.
 # </div>
 
-# %% tags=["solution", "task"]
+# %% tags=[]
 # Comment out the metrics you don
 METRICS = [
     "PSNR",
@@ -831,7 +954,7 @@ show_sampling(test_dset, model, ax=ax[:3])
 show_sampling(test_dset, model, ax=ax[3:6])
 show_sampling(test_dset, model, ax=ax[6:9])
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
 #
 # In your opinion, for a given input, which one is a better indicator of a successfull training?

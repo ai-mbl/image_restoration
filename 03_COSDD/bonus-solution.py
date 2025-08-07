@@ -50,7 +50,7 @@ low_snr, original_sizes = utils.load_data(
 # Load the model trained in the first notebook by entering your `model_name`, or alternatively, uncomment line 4 to load the pretrained model.
 # </div>
 
-# %%
+# %% tags=["task"]
 model_name = ...  # Enter the model name here
 checkpoint_path = os.path.join("checkpoints", model_name)
 
@@ -69,7 +69,7 @@ hub = Hub.load_from_checkpoint(
     direct_denoiser=direct_denoiser,
 ).to(device)
 
-# %%
+# %% tags=["solution"]
 model_name = "mito-confocal"
 checkpoint_path = os.path.join("checkpoints", model_name)
 
@@ -204,13 +204,13 @@ plt.show()
 #
 # </div>
 
-# %%
+# %% tags=["task"]
 n_imgs = ... # Insert an integer here
 generations = hub.sample_prior(n_imgs=n_imgs)
 new_denoised = generations["s"].cpu()
 new_noisy = generations["x"].cpu()
 
-# %%
+# %% tags=["solution"]
 n_imgs = 5 # Insert an integer here
 generations = hub.sample_prior(n_imgs=n_imgs)
 new_denoised = generations["s"].cpu()
