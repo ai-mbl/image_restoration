@@ -31,6 +31,8 @@ jobs:
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/bonus-solution.py --output 03_COSDD/bonus-exercise.ipynb
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 04_MicroSplit/solution.py
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 04_MicroSplit/solution.py --output 04_MicroSplit/exercise.ipynb
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 05_bonus_Noise2Noise/solution.py
+          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 05_bonus_Noise2Noise/solution.py --output 05_bonus_Noise2Noise/exercise.ipynb
       - uses: EndBug/add-and-commit@v9
         with:
           add: "*.ipynb"
