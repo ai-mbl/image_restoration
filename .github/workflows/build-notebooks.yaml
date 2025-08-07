@@ -19,20 +19,30 @@ jobs:
           python -m pip install -U pip
           python -m pip install jupytext nbconvert
 
-      - name: Build notebooks
+      - name: Build and process notebooks
         run: |
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 01_CARE/solution.py --output 01_CARE/exercise.ipynb
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 02_Noise2Void/solution.py
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 02_Noise2Void/solution.py --output 02_Noise2Void/exercise.ipynb
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/solution.py
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/solution.py --output 03_COSDD/exercise.ipynb
+          # Process main solution notebooks in each directory
+          for dir in 01_CARE 02_Noise2Void 03_COSDD 04_MicroSplit 05_bonus_Noise2Noise; do
+            echo "Building notebooks for $dir"
+            jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update $dir/solution.py
+            jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update $dir/solution.py --output $dir/exercise.ipynb
+            
+            echo "Processing $dir/solution.ipynb with nbconvert"
+            jupyter nbconvert $dir/solution.ipynb --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --TagRemovePreprocessor.remove_input_tags task --to notebook --inplace
+            echo "Processing $dir/exercise.ipynb with nbconvert"  
+            jupyter nbconvert $dir/exercise.ipynb --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --TagRemovePreprocessor.remove_cell_tags remove-cell --to notebook --inplace
+          done
+          
+          # Process COSDD bonus notebooks
+          echo "Building COSDD bonus notebooks"
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/bonus-solution.py
           jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 03_COSDD/bonus-solution.py --output 03_COSDD/bonus-exercise.ipynb
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 04_MicroSplit/solution.py
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 04_MicroSplit/solution.py --output 04_MicroSplit/exercise.ipynb
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 05_bonus_Noise2Noise/solution.py
-          jupytext --to ipynb --update-metadata '{"jupytext":{"cell_metadata_filter":"all"}}' --update 05_bonus_Noise2Noise/solution.py --output 05_bonus_Noise2Noise/exercise.ipynb
+          
+          echo "Processing 03_COSDD/bonus-solution.ipynb with nbconvert"
+          jupyter nbconvert 03_COSDD/bonus-solution.ipynb --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags task --TagRemovePreprocessor.remove_input_tags task --to notebook --inplace
+          echo "Processing 03_COSDD/bonus-exercise.ipynb with nbconvert"
+          jupyter nbconvert 03_COSDD/bonus-exercise.ipynb --ClearOutputPreprocessor.enabled=True --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags solution --TagRemovePreprocessor.remove_cell_tags remove-cell --to notebook --inplace
+
       - uses: EndBug/add-and-commit@v9
         with:
           add: "*.ipynb"
