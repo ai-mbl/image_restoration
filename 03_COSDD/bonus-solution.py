@@ -1,3 +1,4 @@
+# %% [markdown] tags=["solution", "task"]
 # ruff: noqa: F811
 # %% [markdown]
 # # Bonus exercise. Generating new images with COSDD
