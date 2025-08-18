@@ -30,16 +30,42 @@ fi
 
 # Download the data
 # CARE + N2V
-python download_careamics_portfolio.py
+if [ ! -d "data/denoising-N2V_SEM.unzip" ] || [ ! -d "data/denoising-CARE_U2OS.unzip" ] || [ ! -d "data/denoising-N2N_SEM.unzip" ]; then
+    echo "Downloading CARE + N2V data..."
+    python download_careamics_portfolio.py
+else
+    echo "CARE, N2V + N2N data already exists, skipping download."
+fi
+
 cd data/
 # COSDD
-wget "https://s3.ap-northeast-1.wasabisys.com/gigadb-datasets/live/pub/10.5524/100001_101000/100888/03-mito-confocal/mito-confocal-lowsnr.tif"
+if [ ! -f "mito-confocal-lowsnr.tif" ]; then
+    echo "Downloading COSDD data..."
+    wget "https://s3.ap-northeast-1.wasabisys.com/gigadb-datasets/live/pub/10.5524/100001_101000/100888/03-mito-confocal/mito-confocal-lowsnr.tif"
+else
+    echo "COSDD data already exists, skipping download."
+fi
 cd ../
-mkdir 03_COSDD/checkpoints
+
+# COSDD checkpoints
+if [ ! -d "03_COSDD/checkpoints" ]; then
+    mkdir -p 03_COSDD/checkpoints
+fi
 cd 03_COSDD/checkpoints
-gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
+if [ -z "$(ls -A . 2>/dev/null)" ]; then
+    echo "Downloading COSDD checkpoints..."
+    gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
+else
+    echo "COSDD checkpoints already exist, skipping download."
+fi
 cd ../../
+
 # MicroSplit
-wget https://download.fht.org/jug/MicroSplit_MBL_2025.zip
-unzip MicroSplit_MBL_2025.zip -d 04_MicroSplit/
-rm MicroSplit_MBL_2025.zip
+if [ ! -d "04_MicroSplit" ] || [ -z "$(ls -A 04_MicroSplit 2>/dev/null)" ]; then
+    echo "Downloading MicroSplit data..."
+    wget https://download.fht.org/jug/MicroSplit_MBL_2025.zip
+    unzip MicroSplit_MBL_2025.zip -d 04_MicroSplit/
+    rm MicroSplit_MBL_2025.zip
+else
+    echo "MicroSplit data already exists, skipping download."
+fi
