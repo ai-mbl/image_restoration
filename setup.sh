@@ -19,7 +19,7 @@ fi
 if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
     pip install git+https://github.com/CAREamics/MicroSplit-reproducibility.git
-    pip install tensorboard scikit-learn gdown jupyterlab
+    pip install tensorboard torch_tb_profiler scikit-learn gdown jupyterlab
     # Using pytorch-lightning 2.4.0 causes bugs in tensorboard and interupting training.
     pip install pytorch-lightning==2.3.3
     pip install git+https://github.com/dlmbl/dlmbl-unet
