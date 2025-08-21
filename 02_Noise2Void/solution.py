@@ -8,7 +8,7 @@
 # sciences. But no panic, Noise2Void is here to help!
 #
 # Indeed Noise2Void is a self-supervised algorithm, meaning that it trains on the data
-# itself and does not require clean images. The idea is to predict the value of a masked
+# itself and does not require clean images. The idea is to predict the value of masked
 # pixels based on the information from the surrounding pixels. Two underlying hypothesis
 # allow N2V to work: the structures are continuous and the noise is pixel-independent, 
 # that is to say the amount of noise in one pixel is independent from the amount of noise

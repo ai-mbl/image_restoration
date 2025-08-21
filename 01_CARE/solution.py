@@ -587,6 +587,7 @@ for epoch in range(n_epochs):
 
         if i % 10 == 0:
             print(f"Epoch: {epoch}, Batch: {i}, Loss: {train_loss.item()}")
+            tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=epoch * len(train_dataloader) + i)
 
     model.eval()
 
@@ -601,7 +602,6 @@ for epoch in range(n_epochs):
 
         # log tensorboard
         step = epoch * len(train_dataloader)
-        tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=step)
         tb_logger.add_scalar(tag="val_loss", scalar_value=val_loss, global_step=step)
 
         # we always log the last validation images
@@ -624,7 +624,7 @@ for epoch in range(n_epochs):
 plt.figure(figsize=(10, 5))
 plt.plot(train_losses)
 plt.plot(val_losses)
-plt.xlabel("Iterations")
+plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(["Train loss", "Validation loss"])
 
