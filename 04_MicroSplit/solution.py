@@ -380,8 +380,8 @@ trainer.fit(
 )
 
 # %% [markdown] tags=[]
-# **NOTE**: one epoch of training should take approximately 12-15 minutes on the course GPU.
-# For the sake of time you can stop training after the first epoch... Results will not be as good, but you will still be able to evaluate the model and see how it works.
+# **NOTE**: the first epoch of training should take approximately 12-15 minutes on the GPU, whereas the subsequent epochs should take around 5-6 minutes each.
+# For the sake of time you can stop training after the 2nd epoch... Results will not be as good, but you will still be able to evaluate the model and see how it works.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h5><b>Task 1.3: Visualize losses and metrics using *Tensorboard*</b></h5>
