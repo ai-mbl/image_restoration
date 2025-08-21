@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# >>> Conda initialization <<<
-source ~/conda/etc/profile.d/conda.sh # FIXME: this only works for MBL course machine
-
 # create environment
 ENV="05_image_restoration"
 conda create -y -n "$ENV" python=3.10
@@ -26,6 +23,7 @@ if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     python -m ipykernel install --user --name "05_image_restoration"
     # Clone the extra repositories
     git clone https://github.com/krulllab/COSDD.git 03_COSDD/COSDD
+    pip install -U tensorboard
 fi
 
 # Download the data
@@ -39,7 +37,3 @@ mkdir 03_COSDD/checkpoints
 cd 03_COSDD/checkpoints
 gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
 cd ../../
-# MicroSplit
-wget https://download.fht.org/jug/MicroSplit_MBL_2025.zip
-unzip MicroSplit_MBL_2025.zip -d 04_MicroSplit/
-rm MicroSplit_MBL_2025.zip
