@@ -227,7 +227,7 @@ max_height = new_noisy.shape[2]
 max_width = new_noisy.shape[3]
 
 index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images, step=1, value=0
+    description="Image index: ", min=0, max=num_images-1, step=1, value=0
 )
 
 vertical_widget = widgets.IntRangeSlider(
