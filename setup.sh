@@ -61,7 +61,7 @@ fi
 cd ../../
 
 # MicroSplit
-if [ ! -d "04_MicroSplit" ] || [ -z "$(ls -A 04_MicroSplit 2>/dev/null)" ]; then
+if [ ! -d "04_MicroSplit/MicroSplit_MBL_2025" ]; then
     echo "Downloading MicroSplit data..."
     wget https://download.fht.org/jug/MicroSplit_MBL_2025.zip
     unzip MicroSplit_MBL_2025.zip -d 04_MicroSplit/
