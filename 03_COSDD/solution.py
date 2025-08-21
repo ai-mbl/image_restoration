@@ -116,7 +116,7 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # %% [markdown] tags=[]
 # COSDD can be applied to noise that is correlated along rows or columns of pixels (or not spatially correlated at all).
 # However, it cannot be applied to noise that is correlated along rows *and* columns of pixels.
-# Noise2Void is designed only for noise that is not spatially correlated at all.
+# Noise2Void is designed for noise that is not spatially correlated at all.
 #
 # When we say that the noise is spatially correlated, we mean that knowing the value of the noise in one pixel tells us something about the noise in other (usually nearby) pixels.
 # Specifically, positive correlatation between two pixels tells us that if the intensity of the noise value in one pixel is high, the intensity of the noise value in the other pixel is likely to be high.
@@ -247,7 +247,7 @@ layout = widgets.VBox([slide_and_index, interactive_output_widget])
 display(layout)
 
 # %% [markdown] tags=[]
-# In the autocorrelation plot, all of the squares should be white, except for the top row. The autocorrelation of the square at (0, 0) will always be 1.0 because a pixel's value will always be perfectly correlated with itself. We define this type of noise as correlated along the x axis.
+# In the autocorrelation plot, all of the squares should be white except for the top row. The autocorrelation of the square at (0, 0) will always be 1.0 because a pixel's value will always be perfectly correlated with itself. We define this type of noise as correlated along the x axis.
 #
 # This is the type of noise that COSDD is designed to remove.
 # Note that COSDD would still work if the data contained spatially *un*correlated noise.
@@ -455,7 +455,7 @@ hub = Hub(
 #
 # Open Tensorboard to monitor training. (See Task 3 of 01_CARE).
 # Choose `03_COSDD/checkpoints` for the folder.
-# In there, you'll see the training logs of a model that was trained for about 4 hours.
+# In there you'll see the training logs of a model that was trained for about 4 hours.
 #
 # Unlike CARE, this model has more than one loss curve.
 # The cell below describes how to interpret each one.
@@ -477,7 +477,7 @@ hub = Hub(
 #
 # If noise has not been fully removed from the output images, try increasing `n_gaussians` argument of the AR decoder. This will give it more flexibility to model complex noise characteristics. However, setting the value too high can lead to unstable training. Typically, values from 3 to 5 work best.
 #
-# Note that the trainer is set to train for only 10 minutes in this example. Remove the line with `max_time` to train fully.
+# Note that the trainer is set to train for only 15 minutes in this example. Remove the line with `max_time` to train fully.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
@@ -598,7 +598,7 @@ predict_loader = torch.utils.data.DataLoader(
 #
 # ### Task 7.1.
 #
-# Our model was only trained for 10 minutes. This is long enough to get some denoising results, but a model trained for longer would do better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
+# Our model was only trained for 15 minutes. This is long enough to get some denoising results, but a model trained for longer would do better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
 #
 # Once you reach the end of the notebook, return to this cell to load a model that has been trained for 3.5 hours by uncommenting line 3, then run the notebook again to see how much difference the extra training time makes. 
 # </div>
