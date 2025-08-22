@@ -212,7 +212,7 @@ val_dloader = DataLoader(
 # </div>
 
 # %% [markdown] tags=["solution"]
-# <div class="alert alert-warning"><h4><b>Question 1.1</b></h4>
+# <div class="alert alert-warning"><h4><b>Answer 1.1</b></h4>
 # 
 # - First columns contain, respectively, the superimposed input patch, and the additional input patches for Lateral Contextualization (LC). The later columns show, instead, the target unmixed patches.
 # - Input patches represent the image obtained by superimposing (mixing) the signal coming from different labeled structures. The additional LC inputs are used to enhance the field of view and, hence, the semantic context processed by the network.
@@ -232,7 +232,7 @@ plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples
 # </div>
 
 # %% [markdown] tags=["solution"]
-# <div class="alert alert-warning"><h4><b>Question 1.2.</b></h4>
+# <div class="alert alert-warning"><h4><b>Answer 1.2.</b></h4>
 # 
 # 1. (b), because it shows more morphologically similar structures. MicroSplit is a content-aware method, i.e., it extracts semantic information regarding morphology, shape, brightness, etc., from the input data. Since structurally similar signal share many semantic features, the unmixing task becomes more challenging.
 # 2. Semantic similarity between labeled structures, difference in brightness/intensity between labeled structures, colocalization, ...
@@ -879,7 +879,7 @@ print("Here the crop you selected:")
 # </div>
 
 # %% [markdown] tags=["solution"]
-# <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
+# <div class="alert alert-warning"><h4><b>Bonus Answer</b></h4>
 # 
 # The receptive field of the CNN is limited so predictions have to be over a tiled image.
 # CNNs require inputs to be padded at the sides to allow same-size convolutions.
@@ -973,3 +973,17 @@ _, ax = plt.subplots(
 show_sampling(test_dset, model, ax=ax[:3])
 show_sampling(test_dset, model, ax=ax[3:6])
 show_sampling(test_dset, model, ax=ax[6:9])
+
+# %% [markdown] tags=[]
+# <div class="alert alert-warning"><h4><b>Bonus Question 2.</b></h4>
+#
+# How do you think we could measure the model's confidence using these samples?
+#
+# </div>
+
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-warning"><h4><b>Bonus Answer 2.</b></h4>
+#
+# Measuring the variance in each pixel would give a spatial map of the model's confidence across the images, with low variance indicating high confidence.
+#
+# </div>
