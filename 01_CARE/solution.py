@@ -774,18 +774,39 @@ test_dataset = CAREDataset(
 )
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-
-# %% [markdown]
-# <div class="alert alert-block alert-info"><h3>Task 4: Predict using the correct mean/std</h3>
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 6: De-Normalization</h3>
 #
-# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images, but we'd like them to be on the same scale as the real clean images.
-#
-# Recall the variables we used to normalize the data in Part 1, and use them denormalize the output of the model.
+# Define the denormalization function. It should take a normalized image (e.g., the model output), the mean and the standard deviation over the dataset and return the denormalized image.
 #
 # </div>
 
+# %% tags=["task"]
+def denormalize(
+    image: np.ndarray,
+    mean: float = 0.0,
+    std: float = 1.0,
+) -> np.ndarray:
+    """
+    Denormalize an image with given mean and standard deviation.
 
-# %%
+    Parameters
+    ----------
+    image : np.ndarray
+        Array containing single image or patch, 2D or 3D.
+    mean : float, optional
+        Mean value for normalization, by default 0.0.
+    std : float, optional
+        Standard deviation value for normalization, by default 1.0.
+
+    Returns
+    -------
+    np.ndarray
+        Denormalized array.
+    """
+    return # YOUR CODE HERE
+
+# %% tags=["solution"]
 def denormalize(
     image: np.ndarray,
     mean: float = 0.0,
@@ -810,6 +831,15 @@ def denormalize(
     """
     return image * std + mean
 
+
+# %% [markdown]
+# <div class="alert alert-block alert-info"><h3>Task 7: Predict using the correct mean/std</h3>
+#
+# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images, but we'd like them to be on the same scale as the real clean images.
+#
+# Recall the variables we used to normalize the data in Part 1, and use them denormalize the output of the model.
+#
+# </div>
 
 # %% tags=["task"]
 # Define the prediction loop
@@ -869,7 +899,7 @@ plt.tight_layout()
 # </div>
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 5: Choose your next exercise</h3>
+# <div class="alert alert-block alert-info"><h3>Task 8: Choose your next exercise</h3>
 #
 # You are free to choose which deep learning-based image restoration method you want to learn about next.
 # To learn more about denoising, you can choose from [02_Noise2Void](../02_Noise2Void/exercise.ipynb) or [03_COSDD](../03_COSDD/exercise.ipynb).
