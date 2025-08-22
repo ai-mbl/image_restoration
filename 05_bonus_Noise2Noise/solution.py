@@ -11,14 +11,13 @@
 # is a self-supervised method that can be trained on noisy images. But there are other 
 # supervised approaches that can be trained on noisy images only, such as Noise2Noise. 
 #
-# Noise2Noise relies on the same assumption as Noise2Void: the noise is pixel-independent.
-# Therefore, if you supervise your network to guess a noisy image from another one, the network
-# will converge to a denoised image. Of course, this only works if the two noisy images are
-# very similar.
-#
-# To acquire data for Noise2Noise, one can simply image the same region of interest twice!
-# Indeed, pixel-independent noise (as opposed to structured noise) will be completely independent
-# between neighboring pixels as well as between the two noisy images.
+# Noise2Noise follows the same training method as CARE, except that instead of predicting clean images the UNet is trained to predict noisy images.
+# The training data is obtained by imaging a sample twice, obtaining two images with the same underlying signal but different samples of noise.
+# The noise in each image will be statistically independent of the noise in the other, meaning that seeing one image tells us nothing about the noise content of the other image.
+# Therefore, a UNet that tries to guess one noisy image from another will be able to accurately predict the signal content, which is identical, but will be completely unable to predict the noise content.
+# Nonetheless, it will try to make its best guess of the noise content - one that minimises the mean square error loss.
+# Luckily for us, noise content is on average zero, meaning that the best best guess is zero-valued noise, i.e., no noise.
+# This means that the network will converge to the same solution as it would if it were trained with clean targets, although it will require more data to compensate for the reduced signal content of the targets.
 #
 # In this notebook, we will again use the [Careamics](https://careamics.github.io) library.
 #
