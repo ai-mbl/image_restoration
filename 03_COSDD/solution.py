@@ -564,7 +564,7 @@ torch.cuda.empty_cache()
 
 # %% [markdown] tags=[]
 # ## 6. Load test data
-# The images that we want to denoise are loaded here. These are the same that we used for training, but we'll only load 5 to speed up inference.
+# The images that we want to denoise are loaded here. These are the same that we used for training, but we'll only load 3 to speed up inference.
 #
 # We'll also get them into a dataloader.
 
@@ -663,7 +663,7 @@ predictor = pl.Trainer(
 # ## 8. Denoise
 # In this section, we will look at how COSDD does inference. 
 #
-# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 100 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
+# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 50 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
 
 # %% [markdown] tags=[]
 # ### 8.1 Random sampling 
@@ -768,13 +768,13 @@ display(layout)
 #
 # ### Task 8.2.
 #
-# In the next cell, we will sample 100 randomly denoised estimates. 
+# In the next cell, we will sample 50 randomly denoised estimates. 
 # Explore their average - the MMSE estimate - to understand the smoothing effect of averaging so many samples.
 # </div>
 
 # %% tags=[]
 use_direct_denoiser = False
-n_samples = 100
+n_samples = 50
 
 hub.direct_pred = use_direct_denoiser
 
@@ -856,7 +856,7 @@ display(layout)
 
 # %% [markdown] tags=[]
 # ### 8.3 Direct denoising
-# Sampling 100 images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
+# Sampling 50 images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
