@@ -169,7 +169,7 @@ train_data_config, val_data_config, test_data_config = get_data_configs(
 # Create the train, val, and test datasets
 
 # %% tags=[]
-datapath = ROOT_DIR / f"data" / f"{EXPOSURE_TIME}ms"
+datapath = ROOT_DIR / f"data/{EXPOSURE_TIME}ms"
 load_data_func = partial(get_train_val_data, structures=STRUCTURES)
 
 # %% tags=[]
@@ -280,7 +280,7 @@ plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples
 # Get pre-trained noise models
 
 # %% tags=[]
-NM_PATH = ROOT_DIR / "noise_models" / f"{EXPOSURE_TIME}ms"
+NM_PATH = ROOT_DIR / f"noise_models/{EXPOSURE_TIME}ms"
 
 paths_to_noise_models = [
     str(NM_PATH / f"noise_model_Ch{STRUCTURE_2_INDEX[structure]}.npz")
@@ -530,7 +530,7 @@ assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500]
 # Load checkpoint
 
 # %% tags=[]
-pretrained_ckpt_path = ROOT_DIR / "ckpts" / f"{EXPOSURE_TIME}ms"
+pretrained_ckpt_path = ROOT_DIR / f"ckpts/{EXPOSURE_TIME}ms"
 selected_ckpt = load_checkpoint_path(pretrained_ckpt_path, best=True)
 print("✅ Selected model checkpoint:", selected_ckpt)
 
@@ -544,7 +544,7 @@ train_data_config, val_data_config, test_data_config = get_data_configs(
 )
 
 # %% tags=[]
-datapath = ROOT_DIR / f"data" / f"{EXPOSURE_TIME}ms"
+datapath = ROOT_DIR / f"data/{EXPOSURE_TIME}ms"
 load_data_func = partial(get_train_val_data, structures=["Microtubules", "NucMembranes", "Centromeres"])
 
 train_dset, val_dset, test_dset, data_stats = create_train_val_datasets(
@@ -557,7 +557,7 @@ train_dset, val_dset, test_dset, data_stats = create_train_val_datasets(
 
 # %% tags=[]
 # get noise models
-NM_PATH = ROOT_DIR / "noise_models" / f"{EXPOSURE_TIME}ms"
+NM_PATH = ROOT_DIR / f"noise_models/{EXPOSURE_TIME}ms"
 paths_to_noise_models = [
     str(NM_PATH / f"noise_model_Ch{STRUCTURE_2_INDEX[structure]}.npz")
     for structure in ["Microtubules", "NucMembranes", "Centromeres"]
@@ -912,7 +912,7 @@ METRICS = [
 
 # %% tags=[]
 _, _, gt_test_dset, _ = create_train_val_datasets(
-    datapath=ROOT_DIR / "data" / "500ms",
+    datapath=ROOT_DIR / "data/500ms",
     train_config=train_data_config,
     val_config=val_data_config,
     test_config=val_data_config,
