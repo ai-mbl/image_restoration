@@ -95,6 +95,9 @@ from utils import (
 assert torch.cuda.is_available()
 torch.set_float32_matmul_precision('medium')
 
+# %% tags=[]
+ROOT_DIR = Path("/mnt/efs/aimbl_2025/data/05_image_restoration/MicroSplit_MBL_2025/")  # Path to the data folder
+
 # %% [markdown] tags=[]
 # # **Exercise 1**: Training MicroSplit
 
@@ -166,7 +169,7 @@ train_data_config, val_data_config, test_data_config = get_data_configs(
 # Create the train, val, and test datasets
 
 # %% tags=[]
-datapath = Path(f"./MicroSplit_MBL_2025/data/{EXPOSURE_TIME}ms")
+datapath = ROOT_DIR / f"data/{EXPOSURE_TIME}ms"
 load_data_func = partial(get_train_val_data, structures=STRUCTURES)
 
 # %% tags=[]
@@ -277,7 +280,7 @@ plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples
 # Get pre-trained noise models
 
 # %% tags=[]
-NM_PATH = Path(f"./MicroSplit_MBL_2025/noise_models/{EXPOSURE_TIME}ms")
+NM_PATH = ROOT_DIR / f"noise_models/{EXPOSURE_TIME}ms"
 
 paths_to_noise_models = [
     str(NM_PATH / f"noise_model_Ch{STRUCTURE_2_INDEX[structure]}.npz")
@@ -375,6 +378,10 @@ trainer.fit(
     train_dataloaders=train_dloader,
     val_dataloaders=val_dloader,
 )
+
+# %% [markdown] tags=[]
+# **NOTE**: the first epoch of training should take approximately 12-15 minutes on the GPU, whereas the subsequent epochs should take around 5-6 minutes each.
+# For the sake of time you can stop training after the 2nd epoch... Results will not be as good, but you will still be able to evaluate the model and see how it works.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h5><b>Task 1.3: Visualize losses and metrics using *Tensorboard*</b></h5>
@@ -523,7 +530,8 @@ assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500]
 # Load checkpoint
 
 # %% tags=[]
-selected_ckpt = load_checkpoint_path(f"./MicroSplit_MBL_2025/ckpts/{EXPOSURE_TIME}ms", best=True)
+pretrained_ckpt_path = ROOT_DIR / f"ckpts/{EXPOSURE_TIME}ms"
+selected_ckpt = load_checkpoint_path(pretrained_ckpt_path, best=True)
 print("✅ Selected model checkpoint:", selected_ckpt)
 
 # %% [markdown] tags=[]
@@ -536,7 +544,7 @@ train_data_config, val_data_config, test_data_config = get_data_configs(
 )
 
 # %% tags=[]
-datapath = Path(f"./MicroSplit_MBL_2025/data/{EXPOSURE_TIME}ms")
+datapath = ROOT_DIR / f"data/{EXPOSURE_TIME}ms"
 load_data_func = partial(get_train_val_data, structures=["Microtubules", "NucMembranes", "Centromeres"])
 
 train_dset, val_dset, test_dset, data_stats = create_train_val_datasets(
@@ -549,7 +557,7 @@ train_dset, val_dset, test_dset, data_stats = create_train_val_datasets(
 
 # %% tags=[]
 # get noise models
-NM_PATH = Path(f"./MicroSplit_MBL_2025/noise_models/{EXPOSURE_TIME}ms")
+NM_PATH = ROOT_DIR / f"noise_models/{EXPOSURE_TIME}ms"
 paths_to_noise_models = [
     str(NM_PATH / f"noise_model_Ch{STRUCTURE_2_INDEX[structure]}.npz")
     for structure in ["Microtubules", "NucMembranes", "Centromeres"]
@@ -905,7 +913,7 @@ METRICS = [
 
 # %% tags=[]
 _, _, gt_test_dset, _ = create_train_val_datasets(
-    datapath=Path(f"./MicroSplit_MBL_2025/data/500ms"),
+    datapath=ROOT_DIR / "data/500ms",
     train_config=train_data_config,
     val_config=val_data_config,
     test_config=val_data_config,
