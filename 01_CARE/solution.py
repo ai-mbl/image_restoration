@@ -33,6 +33,22 @@
 #   Set your python kernel to <code>05_image_restoration</code>
 # </div>
 
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 0: Install Tensorboard</h3>
+#
+# We'll monitor the training of all models in 05_image_restoration using Tensorboard. 
+# This is a program that plots the training and validation loss of networks as they train, and can also show input/output image pairs.
+# Follow these steps to enable Tensorboard:
+#
+# 1) Open the extensions panel in VS Code. Look for this icon. 
+#
+# ![image](nb_data/extensions.png)
+#
+# 2) Search Tensorboard and install the extension published by Microsoft.
+# 3) Set the workspace interpreter to the `05_image_restoration` environment. To do this press `Ctrl/Cmd + Shift + P` and search for `Python: Select Interpreter`. Then select the interpreter called `05_image_restoration`.
+# </div>
+
+
 # %% tags=[]
 import tifffile
 import numpy as np
@@ -55,7 +71,7 @@ from dlmbl_unet import UNet
 #
 # ## Part 1: Set-up the data
 #
-# CARE is a fully supervised algorithm, therefore we need image pairs for training. In practice this is best achieved by acquiring each image twice, once with short exposure time or low laser power to obtain a noisy low-SNR (signal-to-noise ratio) image, and once with high SNR.
+# CARE is a fully supervised algorithm, therefore we need image pairs (noisy & clean) for training. In practice this is best achieved by acquiring each image twice, once with short exposure time or low laser power to obtain a noisy low-SNR (signal-to-noise ratio) image, and once with high SNR.
 #
 # Here, we will be using high SNR images of Human U2OS cells taken from the Broad Bioimage Benchmark Collection ([BBBC006v1](https://bbbc.broadinstitute.org/BBBC006)). The low SNR images were created by synthetically adding strong read-out and shot noise, and applying pixel binning of 2x2, thus mimicking acquisitions at a very low light level.
 #
@@ -291,7 +307,39 @@ print(f"Target mean: {target_mean}, std: {target_std}")
 # %% [markdown] tags=[]
 # These functions will be used to normalize the data and perform data augmentation as it is loaded.
 
-# %% tags=[]
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 1: Normalization</h3>
+#
+# Define the normalization function. It should take an image, the mean and the standard deviation over the dataset and return the normalized image.
+#
+# </div>
+
+# %% tags=["task"]
+def normalize(
+    image: np.ndarray,
+    mean: float = 0.0,
+    std: float = 1.0,
+) -> np.ndarray:
+    """
+    Normalize an image with given mean and standard deviation.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Array containing single image or patch, 2D or 3D.
+    mean : float, optional
+        Mean value for normalization, by default 0.0.
+    std : float, optional
+        Standard deviation value for normalization, by default 1.0.
+
+    Returns
+    -------
+    np.ndarray
+        Normalized array.
+    """
+    return # YOUR CODE HERE
+
+# %% tags=["solution"]
 def normalize(
     image: np.ndarray,
     mean: float = 0.0,
@@ -317,6 +365,7 @@ def normalize(
     return (image - mean) / std
 
 
+# %% tags=[]
 def _flip_and_rotate(
     image: np.ndarray, rotate_state: int, flip_state: int
 ) -> np.ndarray:
@@ -380,13 +429,35 @@ def augment_batch(
 # Here we're defining the basic pytorch dataset class that will be used to load the data. This class will be used to load the data and apply the normalization and augmentation functions to the data as it is loaded.
 #
 
-# %% tags=[]
+
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 2: Dataset</h3>
+#
+# Complete the `__len__` and `__getitem__` methods of `CAREDataset` class below.
+#
+# *Hint* : You should use the augmentation and normalization functions defined above.
+# Check the description of class attributes defined in the `__init__` method to understand what each of them is.
+# </div>
+
+# %% tags=["task"]
 # Define a Dataset
 class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset class
     def __init__(
-        self, image_data: np.ndarray, target_data: np.ndarray, apply_augmentations=False
+        self, image_data: np.ndarray, target_data: np.ndarray, apply_augmentations: bool = False
     ):
-        # these are the "members" of the CAREDataset
+        """
+        Constructor.
+        
+        Parameters
+        ----------
+        image_data : np.ndarray
+            Array containing all input images or patches, 2D (N, H, W) or 3D (N, D, H, W).
+        target_data : np.ndarray
+            Array containing all target images or patches, 2D (N, H, W) or 3D (N, D, H, W).
+        apply_augmentations : bool, optional
+            Whether to apply augmentations to the patches, by default False.
+        """
+        # these are the "members/attributes" of the CAREDataset
         self.image_data = image_data
         self.target_data = target_data
         self.patch_augment = apply_augmentations
@@ -396,17 +467,67 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
 
         This method is called when applying `len(...)` to an instance of our class
         """
-        return self.image_data.shape[
-            0
-        ]  # Your code here, define the total number of patches
+        return # YOUR CODE HERE --> define the total number of patches
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         """Return a single pair of patches."""
 
-        # get patch
+        # get input noisy patch
+        patch = # YOUR CODE HERE
+
+        # get target clean patch
+        target = # YOUR CODE HERE
+
+        # Apply transforms
+        if self.patch_augment:
+            patch, target = # YOUR CODE HERE
+
+        # Normalize the patch
+        patch = # YOUR CODE HERE
+        target = # YOUR CODE HERE
+
+        return (
+            patch[np.newaxis].astype(np.float32),
+            target[np.newaxis].astype(np.float32)
+        )
+
+# %% tags=["solution"]
+# Define a Dataset
+class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset class
+    def __init__(
+        self, image_data: np.ndarray, target_data: np.ndarray, apply_augmentations=False
+    ):
+        """
+        Constructor.
+        
+        Parameters
+        ----------
+        image_data : np.ndarray
+            Array containing all input images or patches, 2D (N, H, W) or 3D (N, D, H, W).
+        target_data : np.ndarray
+            Array containing all target images or patches, 2D (N, H, W) or 3D (N, D, H, W).
+        apply_augmentations : bool, optional
+            Whether to apply augmentations to the patches, by default False.
+        """
+        # these are the "members/attributes" of the CAREDataset
+        self.image_data = image_data
+        self.target_data = target_data
+        self.patch_augment = apply_augmentations
+
+    def __len__(self):
+        """Return the total number of patches.
+
+        This method is called when applying `len(...)` to an instance of our class
+        """
+        return self.image_data.shape[0]
+
+    def __getitem__(self, index: int):
+        """Return a single pair of patches."""
+
+        # get input noisy patch
         patch = self.image_data[index]
 
-        # get target
+        # get target clean patch
         target = self.target_data[index]
 
         # Apply transforms
@@ -417,8 +538,9 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
         patch = normalize(patch, train_mean, train_std)
         target = normalize(target, target_mean, target_std)
 
-        return patch[np.newaxis].astype(np.float32), target[np.newaxis].astype(
-            np.float32
+        return (
+            patch[np.newaxis].astype(np.float32),
+            target[np.newaxis].astype(np.float32)
         )
 
 
@@ -493,9 +615,11 @@ val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 model = UNet(depth=2, in_channels=1, out_channels=1)
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 1: Loss function</h3>
+# <div class="alert alert-block alert-info"><h3>Task 3: Loss function</h3>
 #
-# CARE trains image to image, therefore we need a different loss function compared to the segmentation task (image to mask). Can you think of a suitable loss function?
+# CARE trains image to image (output vs. ground truth), therefore we need a different loss function compared to the segmentation task (image to mask). 
+# For example, we may want to somehow measure the pixel-wise difference in intensity between the output and the ground truth.
+# Can you think of a suitable loss function?
 #
 # *hint: look in the `torch.nn` module of PyTorch ([link](https://pytorch.org/docs/stable/nn.html#loss-functions)).*
 #
@@ -508,10 +632,12 @@ loss = #### YOUR CODE HERE ####
 loss = torch.nn.MSELoss()
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 2: Optimizer</h3>
+# <div class="alert alert-block alert-info"><h3>Task 4: Optimizer</h3>
 #
 # Similarly, define the optimizer. No need to be too inventive here!
 #
+# *hint* : look in the `torch.optim` module of PyTorch ([link](https://pytorch.org/docs/stable/optim.html)).
+# Make sure to define all the parameters required for the optimizer (e.g., learning rate).
 # </div>
 
 # %% tags=["task"]
@@ -530,20 +656,14 @@ optimizer = torch.optim.Adam(
 #
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 3: Tensorboard</h3>
+# <div class="alert alert-block alert-info"><h3>Task 5: Launch Tensorboard</h3>
 #
-# We'll monitor the training of all models in 05_image_restoration using Tensorboard. 
-# This is a program that plots the training and validation loss of networks as they train, and can also show input/output image pairs.
-# Follow these steps to launch Tensorboard.
-#
-# 1) Open the extensions panel in VS Code. Look for this icon. 
-#
-# ![image](nb_data/extensions.png)
-#
-# 2) Search Tensorboard and install and install the extension published by Microsoft.
-# 3) Start training. Run the cell below to begin training the model and generating logs.
-# 3) Once training is started. Open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
-# 4) When prompted, select "Select another folder" and enter the path to the `01_CARE/runs/` directory.
+# As we mentioned above, we'll monitor the training using Tensorboard. 
+# Follow these steps to launch Tensorboard to monitor your training run:
+
+# 1) Start training. Run the cell below to begin training the model and generating logs.
+# 2) Once training is started. Open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
+# 3) When prompted, select "Select another folder" and enter the path to the `01_CARE/runs/` directory.
 #
 # </div>
 
@@ -585,8 +705,8 @@ for epoch in range(n_epochs):
         train_loss.backward()
         optimizer.step()
 
-        if i % 10 == 0:
-            print(f"Epoch: {epoch}, Batch: {i}, Loss: {train_loss.item()}")
+        if i % 20 == 0 or i == len(train_dataloader) - 1:
+            print(f"Epoch: {epoch} - Batch: {i}/{len(train_dataloader)} - Loss: {train_loss.item()}")
             tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=epoch * len(train_dataloader) + i)
 
     model.eval()
@@ -656,18 +776,40 @@ test_dataset = CAREDataset(
 )
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-
-# %% [markdown]
-# <div class="alert alert-block alert-info"><h3>Task 4: Predict using the correct mean/std</h3>
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 6: Denormalization</h3>
 #
-# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images, but we'd like them to be on the same scale as the real clean images.
+# Define the denormalization function. It should take a normalized image (e.g., the model output), the mean and the standard deviation over the dataset and return the denormalized image.
 #
-# Recall the variables we used to normalize the data in Part 1, and use them denormalize the output of the model.
-#
+# *hint* : You just need to invert the normalization operation you defined above!
 # </div>
 
+# %% tags=["task"]
+def denormalize(
+    image: np.ndarray,
+    mean: float = 0.0,
+    std: float = 1.0,
+) -> np.ndarray:
+    """
+    Denormalize an image with given mean and standard deviation.
 
-# %%
+    Parameters
+    ----------
+    image : np.ndarray
+        Array containing single image or patch, 2D or 3D.
+    mean : float, optional
+        Mean value for normalization, by default 0.0.
+    std : float, optional
+        Standard deviation value for normalization, by default 1.0.
+
+    Returns
+    -------
+    np.ndarray
+        Denormalized array.
+    """
+    return # YOUR CODE HERE
+
+# %% tags=["solution"]
 def denormalize(
     image: np.ndarray,
     mean: float = 0.0,
@@ -692,6 +834,16 @@ def denormalize(
     """
     return image * std + mean
 
+
+# %% [markdown]
+# <div class="alert alert-block alert-info"><h3>Task 7: Predict using the correct mean/std</h3>
+#
+# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images. However, we'd like them to be on the same scale as the real clean images.
+#
+# Recall the variables storing the dataset statistics we used to normalize the data in Part 1, and use them denormalize the output of the model.
+# Should you use the mean and std of the input images or the target images?
+#
+# </div>
 
 # %% tags=["task"]
 # Define the prediction loop
@@ -719,7 +871,7 @@ with no_grad():
         output = model(image_batch)
 
         # Save the predictions for visualization
-        predictions.append(denormalize(output.cpu().numpy(), train_mean, train_std))
+        predictions.append(denormalize(output.cpu().numpy(), target_mean, target_std))
 
 # %% [markdown] tags=[]
 # ### Visualize the predictions
@@ -751,13 +903,13 @@ plt.tight_layout()
 # </div>
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 5: Choose your next exercise</h3>
+# <div class="alert alert-block alert-info"><h3>Task 8: Choose your next exercise</h3>
 #
 # You are free to choose which deep learning-based image restoration method you want to learn about next.
 # To learn more about denoising, you can choose from [02_Noise2Void](../02_Noise2Void/exercise.ipynb) or [03_COSDD](../03_COSDD/exercise.ipynb).
 # Or, to learn about computational unmixing, try [04_DenoiSplit](../04_DenoiSplit/exercise.ipynb).
 #
-# [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained using unpaired noisy images, meaning that, unlike CARE, we don't need any examples of clean images.
+# [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained directly on (unpaired) noisy images in a self-supervised fashion. Meaning that, unlike CARE, we don't need any examples of clean images.
 # It's also relatively quick to train.
 # But there's a catch.
 # It relies on the assumption that the noise is unstructured.
@@ -770,7 +922,7 @@ plt.tight_layout()
 # The practical trade-off with N2V is that COSDD takes much longer to train.
 #
 # [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
-# It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into as many as four.
+# It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into multiple ones (up to 4 in our work).
 # Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
 #
 #
