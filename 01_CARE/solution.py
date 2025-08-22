@@ -29,6 +29,11 @@
 #
 
 # %% [markdown] tags=[]
+# <div class="alert alert-danger">
+#   Set your python kernel to <code>05_image_restoration</code>
+# </div>
+
+# %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 0: Install Tensorboard</h3>
 #
 # We'll monitor the training of all models in 05_image_restoration using Tensorboard. 
@@ -40,14 +45,9 @@
 # ![image](nb_data/extensions.png)
 #
 # 2) Search Tensorboard and install the extension published by Microsoft.
-#
+# 3) Set the workspace interpreter to the `05_image_restoration` environment. To do this press `Ctrl/Cmd + Shift + P` and search for `Python: Select Interpreter`. Then select the interpreter called `05_image_restoration`.
 # </div>
 
-
-# %% [markdown] tags=[]
-# <div class="alert alert-danger">
-#   Set your python kernel to <code>05_image_restoration</code>
-# </div>
 
 # %% tags=[]
 import tifffile
@@ -71,7 +71,7 @@ from dlmbl_unet import UNet
 #
 # ## Part 1: Set-up the data
 #
-# CARE is a fully supervised algorithm, therefore we need image pairs for training. In practice this is best achieved by acquiring each image twice, once with short exposure time or low laser power to obtain a noisy low-SNR (signal-to-noise ratio) image, and once with high SNR.
+# CARE is a fully supervised algorithm, therefore we need image pairs (noisy & clean) for training. In practice this is best achieved by acquiring each image twice, once with short exposure time or low laser power to obtain a noisy low-SNR (signal-to-noise ratio) image, and once with high SNR.
 #
 # Here, we will be using high SNR images of Human U2OS cells taken from the Broad Bioimage Benchmark Collection ([BBBC006v1](https://bbbc.broadinstitute.org/BBBC006)). The low SNR images were created by synthetically adding strong read-out and shot noise, and applying pixel binning of 2x2, thus mimicking acquisitions at a very low light level.
 #
@@ -433,7 +433,7 @@ def augment_batch(
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 2: Dataset</h3>
 #
-# Complete the `__len__` and `__get_item__` methods of `CAREDataset` class below.
+# Complete the `__len__` and `__getitem__` methods of `CAREDataset` class below.
 #
 # *Hint* : You should use the augmentation and normalization functions defined above.
 # Check the description of class attributes defined in the `__init__` method to understand what each of them is.
@@ -636,6 +636,8 @@ loss = torch.nn.MSELoss()
 #
 # Similarly, define the optimizer. No need to be too inventive here!
 #
+# *hint* : look in the `torch.optim` module of PyTorch ([link](https://pytorch.org/docs/stable/optim.html)).
+# Make sure to define all the parameters required for the optimizer (e.g., learning rate).
 # </div>
 
 # %% tags=["task"]
@@ -703,8 +705,8 @@ for epoch in range(n_epochs):
         train_loss.backward()
         optimizer.step()
 
-        if i % 10 == 0:
-            print(f"Epoch: {epoch}, Batch: {i}, Loss: {train_loss.item()}")
+        if i % 20 == 0 or i == len(train_dataloader) - 1:
+            print(f"Epoch: {epoch} - Batch: {i}/{len(train_dataloader)} - Loss: {train_loss.item()}")
             tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=epoch * len(train_dataloader) + i)
 
     model.eval()
@@ -775,10 +777,11 @@ test_dataset = CAREDataset(
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 6: De-Normalization</h3>
+# <div class="alert alert-block alert-info"><h3>Task 6: Denormalization</h3>
 #
 # Define the denormalization function. It should take a normalized image (e.g., the model output), the mean and the standard deviation over the dataset and return the denormalized image.
 #
+# *hint* : You just need to invert the normalization operation you defined above!
 # </div>
 
 # %% tags=["task"]
@@ -835,9 +838,10 @@ def denormalize(
 # %% [markdown]
 # <div class="alert alert-block alert-info"><h3>Task 7: Predict using the correct mean/std</h3>
 #
-# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images, but we'd like them to be on the same scale as the real clean images.
+# In Part 1 we normalized the inputs and the targets before feeding them into the model. This means that the model will output normalized clean images. However, we'd like them to be on the same scale as the real clean images.
 #
-# Recall the variables we used to normalize the data in Part 1, and use them denormalize the output of the model.
+# Recall the variables storing the dataset statistics we used to normalize the data in Part 1, and use them denormalize the output of the model.
+# Should you use the mean and std of the input images or the target images?
 #
 # </div>
 
@@ -867,7 +871,7 @@ with no_grad():
         output = model(image_batch)
 
         # Save the predictions for visualization
-        predictions.append(denormalize(output.cpu().numpy(), train_mean, train_std))
+        predictions.append(denormalize(output.cpu().numpy(), target_mean, target_std))
 
 # %% [markdown] tags=[]
 # ### Visualize the predictions
@@ -905,7 +909,7 @@ plt.tight_layout()
 # To learn more about denoising, you can choose from [02_Noise2Void](../02_Noise2Void/exercise.ipynb) or [03_COSDD](../03_COSDD/exercise.ipynb).
 # Or, to learn about computational unmixing, try [04_DenoiSplit](../04_DenoiSplit/exercise.ipynb).
 #
-# [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained using unpaired noisy images, meaning that, unlike CARE, we don't need any examples of clean images.
+# [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained directly on (unpaired) noisy images in a self-supervised fashion. Meaning that, unlike CARE, we don't need any examples of clean images.
 # It's also relatively quick to train.
 # But there's a catch.
 # It relies on the assumption that the noise is unstructured.
@@ -918,7 +922,7 @@ plt.tight_layout()
 # The practical trade-off with N2V is that COSDD takes much longer to train.
 #
 # [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
-# It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into as many as four.
+# It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into multiple ones (up to 4 in our work).
 # Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
 #
 #
