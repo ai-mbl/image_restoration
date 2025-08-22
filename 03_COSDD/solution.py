@@ -24,16 +24,13 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.plugins.environments import LightningEnvironment
-import matplotlib.pyplot as plt
-import numpy as np
 from tqdm import tqdm
-from ipywidgets import interactive_output
-import ipywidgets as widgets
 import yaml
 
 from COSDD import utils
 from COSDD.models.get_models import get_models
 from COSDD.models.hub import Hub
+import interactive_plots as iplots
 
 # %matplotlib inline
 
@@ -116,7 +113,7 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # %% [markdown] tags=[]
 # COSDD can be applied to noise that is correlated along rows or columns of pixels (or not spatially correlated at all).
 # However, it cannot be applied to noise that is correlated along rows *and* columns of pixels.
-# Noise2Void is designed only for noise that is not spatially correlated at all.
+# Noise2Void is designed for noise that is not spatially correlated at all.
 #
 # When we say that the noise is spatially correlated, we mean that knowing the value of the noise in one pixel tells us something about the noise in other (usually nearby) pixels.
 # Specifically, positive correlatation between two pixels tells us that if the intensity of the noise value in one pixel is high, the intensity of the noise value in the other pixel is likely to be high.
@@ -164,90 +161,10 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # </div>
 
 # %% tags=[]
-vmin = np.percentile(low_snr, 1)
-vmax = np.percentile(low_snr, 99)
-
-num_images = low_snr.shape[0]
-num_channels = low_snr.shape[1]
-max_height = low_snr.shape[2]
-max_width = low_snr.shape[3]
-
-index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images-1, step=1, value=0
-)
-vertical_widget = widgets.IntRangeSlider(
-    description="Vertical crop",
-    min=0,
-    max=max_height,
-    step=1,
-    value=[0, max_height],
-    orientation="vertical",
-    style={"description_width": "initial"},
-    layout=widgets.Layout(margin='0 0 0 30px')
-)
-horizontal_widget = widgets.IntRangeSlider(
-    description="Horizontal crop",
-    min=0,
-    max=max_width,
-    step=1,
-    value=[0, max_width],
-    style={"description_width": "initial"},
-)
-autocorr_button = widgets.ToggleButton(description="Calculate autocorrelation", layout=widgets.Layout(width='200px'))
-
-
-def reset_toggle(*args):
-    autocorr_button.value = False
-
-
-index_slider.observe(reset_toggle, "value")
-vertical_widget.observe(reset_toggle, "value")
-horizontal_widget.observe(reset_toggle, "value")
-
-
-### Explore slices of the data here
-def plot_crop(image_index, horizontal, vertical, plot_ac=False):
-    left, right = horizontal[0], horizontal[1]
-    top, bottom = vertical[1], vertical[0]
-    top = max_height - top
-    bottom = max_width - bottom
-    crop = (image_index, 0, slice(top, bottom), slice(left, right))
-    fig, ax = plt.subplots(1, 2, figsize=(16, 8))
-    ax[0].imshow(low_snr[crop], vmin=vmin, vmax=vmax)
-    if plot_ac:
-        max_lag = min(min(25, bottom - top), min(25, right - left))
-        noise_ac = utils.autocorrelation(low_snr[crop], max_lag=max_lag)
-        ac = ax[1].imshow(noise_ac, cmap="seismic", vmin=-1, vmax=1)
-        fig.colorbar(ac, fraction=0.045)
-        ax[1].set_title("Autocorrelation plot")
-        ax[1].set_xlabel("Horizontal lag")
-        ax[1].set_ylabel("Vertical lag")
-    else:
-        ax[1].imshow(np.zeros_like(low_snr[crop]), cmap="seismic", vmin=-1, vmax=1)
-        ax[1].axis("off")
-    plt.show()
-
-
-interactive_output_widget = interactive_output(
-    plot_crop,
-    {
-        "image_index": index_slider,
-        "horizontal": horizontal_widget,
-        "vertical": vertical_widget,
-        "plot_ac": autocorr_button,
-    },
-)
-
-index_and_ac = widgets.HBox([index_slider, autocorr_button])
-sliders = widgets.HBox([horizontal_widget, vertical_widget])
-slide_and_index = widgets.VBox([index_and_ac, sliders])
-
-layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-display(layout)
+iplots.find_dark_patch(low_snr)
 
 # %% [markdown] tags=[]
-# In the autocorrelation plot, all of the squares should be white, except for the top row. The autocorrelation of the square at (0, 0) will always be 1.0 because a pixel's value will always be perfectly correlated with itself. We define this type of noise as correlated along the x axis.
+# In the autocorrelation plot, all of the squares should be white except for the top row. The autocorrelation of the square at (0, 0) will always be 1.0 because a pixel's value will always be perfectly correlated with itself. We define this type of noise as correlated along the x axis.
 #
 # This is the type of noise that COSDD is designed to remove.
 # Note that COSDD would still work if the data contained spatially *un*correlated noise.
@@ -363,7 +280,7 @@ datamodule = utils.DataModule(
 s_code_channels = 64
 n_layers = 6
 noise_direction = ...  # 
-n_gaussians = 8
+n_gaussians = 10
 use_direct_denoiser = ...  # 
 dd_loss_fn = "MSE"
 graident_checkpoints = False
@@ -406,7 +323,7 @@ hub = Hub(
 s_code_channels = 64
 n_layers = 6
 noise_direction = "x"
-n_gaussians = 8
+n_gaussians = 10
 use_direct_denoiser = True
 dd_loss_fn = "MSE"
 graident_checkpoints = False
@@ -455,7 +372,7 @@ hub = Hub(
 #
 # Open Tensorboard to monitor training. (See Task 3 of 01_CARE).
 # Choose `03_COSDD/checkpoints` for the folder.
-# In there, you'll see the training logs of a model that was trained for about 4 hours.
+# In there you'll see the training logs of a model that was trained for about 4 hours.
 #
 # Unlike CARE, this model has more than one loss curve.
 # The cell below describes how to interpret each one.
@@ -477,7 +394,7 @@ hub = Hub(
 #
 # If noise has not been fully removed from the output images, try increasing `n_gaussians` argument of the AR decoder. This will give it more flexibility to model complex noise characteristics. However, setting the value too high can lead to unstable training. Typically, values from 3 to 5 work best.
 #
-# Note that the trainer is set to train for only 10 minutes in this example. Remove the line with `max_time` to train fully.
+# Note that the trainer is set to train for only 15 minutes in this example. Remove the line with `max_time` to train fully.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
@@ -564,7 +481,7 @@ torch.cuda.empty_cache()
 
 # %% [markdown] tags=[]
 # ## 6. Load test data
-# The images that we want to denoise are loaded here. These are the same that we used for training, but we'll only load 5 to speed up inference.
+# The images that we want to denoise are loaded here. These are the same that we used for training, but we'll only load 3 to speed up inference.
 #
 # We'll also get them into a dataloader.
 
@@ -598,7 +515,7 @@ predict_loader = torch.utils.data.DataLoader(
 #
 # ### Task 7.1.
 #
-# Our model was only trained for 10 minutes. This is long enough to get some denoising results, but a model trained for longer would do better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
+# Our model was only trained for 15 minutes. This is long enough to get some denoising results, but a model trained for longer would do better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
 #
 # Once you reach the end of the notebook, return to this cell to load a model that has been trained for 3.5 hours by uncommenting line 3, then run the notebook again to see how much difference the extra training time makes. 
 # </div>
@@ -663,7 +580,7 @@ predictor = pl.Trainer(
 # ## 8. Denoise
 # In this section, we will look at how COSDD does inference. 
 #
-# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 100 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
+# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 50 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
 
 # %% [markdown] tags=[]
 # ### 8.1 Random sampling 
@@ -695,68 +612,7 @@ samples = torch.stack(samples, dim=1).half()
 # </div>
 
 # %% tags=[]
-vmin = np.percentile(test_data, 1)
-vmax = np.percentile(test_data, 99)
-
-num_images = test_data.shape[0]
-num_channels = test_data.shape[1]
-max_height = test_data.shape[2]
-max_width = test_data.shape[3]
-
-index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images-1, step=1, value=0
-)
-vertical_widget = widgets.IntRangeSlider(
-    description="Vertical crop",
-    min=0,
-    max=max_height,
-    step=1,
-    value=[0, max_height],
-    orientation="vertical",
-    style={"description_width": "initial"},
-    layout=widgets.Layout(margin='0 0 0 30px')
-)
-horizontal_widget = widgets.IntRangeSlider(
-    description="Horizontal crop",
-    min=0,
-    max=max_width,
-    step=1,
-    value=[0, max_width],
-    style={"description_width": "initial"},
-)
-
-### Explore slices of the data here
-def plot_crop(image_index, horizontal, vertical):
-    left, right = horizontal[0], horizontal[1]
-    top, bottom = vertical[1], vertical[0]
-    top = max_height - top
-    bottom = max_width - bottom
-    crop = (0, slice(top, bottom), slice(left, right))
-    fig, ax = plt.subplots(2, 4, figsize=(16, 8))
-    ax[0, 0].imshow(test_data[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[0, 0].set_title("Input")
-    for i in range(n_samples):
-        ax[(i + 1) // 4, (i + 1) % 4].imshow(
-            samples[image_index][i][crop], vmin=vmin, vmax=vmax
-        )
-        ax[(i + 1) // 4, (i + 1) % 4].set_title(f"Sample {i+1}")
-    plt.show()
-
-interactive_output_widget = interactive_output(
-    plot_crop,
-    {
-        "image_index": index_slider,
-        "horizontal": horizontal_widget,
-        "vertical": vertical_widget,
-    },
-)
-
-sliders = widgets.HBox([horizontal_widget, vertical_widget])
-slide_and_index = widgets.VBox([index_slider, sliders])
-
-layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-display(layout)
+iplots.plot_samples(test_data, samples)
 
 # %% [markdown] tags=[]
 # ### 8.2 MMSE estimate
@@ -768,13 +624,13 @@ display(layout)
 #
 # ### Task 8.2.
 #
-# In the next cell, we will sample 100 randomly denoised estimates. 
+# In the next cell, we will sample 50 randomly denoised estimates. 
 # Explore their average - the MMSE estimate - to understand the smoothing effect of averaging so many samples.
 # </div>
 
 # %% tags=[]
 use_direct_denoiser = False
-n_samples = 100
+n_samples = 50
 
 hub.direct_pred = use_direct_denoiser
 
@@ -788,75 +644,15 @@ samples = torch.stack(samples, dim=1).half()
 MMSEs = torch.mean(samples, dim=1)
 
 # %% tags=[]
-vmin = np.percentile(test_data, 1)
-vmax = np.percentile(test_data, 99)
+iplots.plot_mmse(test_data, MMSEs, samples)
 
-num_images = test_data.shape[0]
-num_channels = test_data.shape[1]
-max_height = test_data.shape[2]
-max_width = test_data.shape[3]
-
-index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images-1, step=1, value=0
-)
-vertical_widget = widgets.IntRangeSlider(
-    description="Vertical crop",
-    min=0,
-    max=max_height,
-    step=1,
-    value=[0, max_height],
-    orientation="vertical",
-    style={"description_width": "initial"},
-    layout=widgets.Layout(margin='0 0 0 30px')
-)
-horizontal_widget = widgets.IntRangeSlider(
-    description="Horizontal crop",
-    min=0,
-    max=max_width,
-    step=1,
-    value=[0, max_width],
-    style={"description_width": "initial"},
-)
-
-### Explore slices of the data here
-def plot_crop(image_index, horizontal, vertical):
-    left, right = horizontal[0], horizontal[1]
-    top, bottom = vertical[1], vertical[0]
-    top = max_height - top
-    bottom = max_width - bottom
-    crop = (0, slice(top, bottom), slice(left, right))
-    fig, ax = plt.subplots(1, 3, figsize=(12, 4))
-    ax[0].imshow(test_data[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[0].set_title("Input")
-    ax[1].imshow(samples[image_index][0][crop], vmin=vmin, vmax=vmax)
-    ax[1].set_title("Sample")
-    ax[2].imshow(MMSEs[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[2].set_title("MMSE")
-
-    plt.show()
-
-interactive_output_widget = interactive_output(
-    plot_crop,
-    {
-        "image_index": index_slider,
-        "horizontal": horizontal_widget,
-        "vertical": vertical_widget,
-    },
-)
-
-sliders = widgets.HBox([horizontal_widget, vertical_widget])
-slide_and_index = widgets.VBox([index_slider, sliders])
-
-layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-display(layout)
 
 # %% [markdown] tags=[]
 # The MMSE will usually be closer to the reference than an individual sample and would score a higher PSNR, although it will also be blurrier.
 
 # %% [markdown] tags=[]
 # ### 8.3 Direct denoising
-# Sampling 100 images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
+# Sampling 50 images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
@@ -883,68 +679,7 @@ direct = predictor.predict(hub, predict_loader)
 direct = torch.cat(direct, dim=0).half()
 
 # %% tags=[]
-vmin = np.percentile(test_data, 1)
-vmax = np.percentile(test_data, 99)
-
-num_images = test_data.shape[0]
-num_channels = test_data.shape[1]
-max_height = test_data.shape[2]
-max_width = test_data.shape[3]
-
-index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images-1, step=1, value=0
-)
-vertical_widget = widgets.IntRangeSlider(
-    description="Vertical crop",
-    min=0,
-    max=max_height,
-    step=1,
-    value=[0, max_height],
-    orientation="vertical",
-    style={"description_width": "initial"},
-    layout=widgets.Layout(margin='0 0 0 30px')
-)
-horizontal_widget = widgets.IntRangeSlider(
-    description="Horizontal crop",
-    min=0,
-    max=max_width,
-    step=1,
-    value=[0, max_width],
-    style={"description_width": "initial"},
-)
-
-### Explore slices of the data here
-def plot_crop(image_index, horizontal, vertical):
-    left, right = horizontal[0], horizontal[1]
-    top, bottom = vertical[1], vertical[0]
-    top = 1024 - top
-    bottom = 1024 - bottom
-    crop = (0, slice(top, bottom), slice(left, right))
-    fig, ax = plt.subplots(1, 3, figsize=(12, 4))
-    ax[0].imshow(test_data[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[0].set_title("Input")
-    ax[1].imshow(direct[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[1].set_title("Direct")
-    ax[2].imshow(MMSEs[image_index][crop], vmin=vmin, vmax=vmax)
-    ax[2].set_title("MMSE")
-
-    plt.show()
-
-interactive_output_widget = interactive_output(
-    plot_crop,
-    {
-        "image_index": index_slider,
-        "horizontal": horizontal_widget,
-        "vertical": vertical_widget,
-    },
-)
-
-sliders = widgets.HBox([horizontal_widget, vertical_widget])
-slide_and_index = widgets.VBox([index_slider, sliders])
-
-layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-display(layout)
+iplots.plot_direct(test_data, direct, MMSEs)
 
 # %% [markdown] tags=[]
 # ### 9. Incorrect receptive field
