@@ -7,27 +7,29 @@
 # discussed during the lecture, ground-truth data is not always available in life 
 # sciences. But no panic, Noise2Void is here to help!
 #
-# Indeed Noise2Void is a self-supervised algorithm, meaning that it trains on the data
+# Indeed Noise2Void (N2V) is a self-supervised algorithm, meaning that it is trained on the data
 # itself and does not require clean images. The idea is to predict the value of masked
-# pixels based on the information from the surrounding pixels. Two underlying hypothesis
-# allow N2V to work: the structures are continuous and the noise is pixel-independent, 
-# that is to say the amount of noise in one pixel is independent from the amount of noise
-# in the surrounding pixels. Fortunately for us, it is very often the case in microscopy images!
+# pixels based on the information from the surrounding pixels. 
 #
-# If N2V does not require pairs of noisy and clean images, then how does it train?
+# Two underlying hypothesis allow N2V to work:
+# 1. the signal (i.e., the underlying biological structures) is continuous, meaning that neighboring pixels are somehow correlated and consistent with each other,
+# 2. the noise is, instead, pixel-independent, that is to say the amount of noise in one pixel is independent from the amount of noise in the surrounding pixels.
+# Fortunately for us, it is very often the case in microscopy images!
 #
-# First it selects random pixels in each patch, then it masks them. The masking is 
-# not done by setting their value to 0 (which could disturb the network since it is an
-# unexpected value) but by replacing the value with that of one of the neighboring pixels.
+# *If N2V does not require pairs of noisy and clean images, then how does it train?*
 #
-# Then, the network is trained to predict the value of the masked pixels. Since the masked
-# value is different from the original value, the network needs to use the information
-# contained in all the pixels surrounding the masked pixel. If the noise is pixel-independent,
-# then the network cannot predict the amount of noise in the original pixel and it ends
-# up predicting a value close to the "clean", or denoised, value.
+# For each training patch, it first selects some random pixels which get *masked*. Masking is 
+# not simply done by setting pixel values to 0 (which could hinder network performance, as it is an
+# *unexpected*, or more properly out-of-distribution, value), but by replacing the value with the one of the neighboring pixels.
 #
-# In this notebook, we will use an existing library called [Careamics](https://careamics.github.io)
-# that includes N2V and other algorithms:
+# Then, the network is trained with the objective of predicting the value of the masked pixels. 
+# Since the masked value is different from the original value, the network is forced to use the information
+# contained in all the surrounding pixels to infer the masked one. If the noise is pixel-independent, but the signal is not,
+# then the network is not able to predict the amount of noise in the original pixel and it ends
+# up predicting a value close to the "clean", or denoised, value, i.e., the signal.
+#
+# In this notebook, we will use an existing Python library called [Careamics](https://careamics.github.io)
+# that includes efficient and user-friendly implementations of N2V and other algorithms:
 #
 # <p align="center">
 #     <img src="https://raw.githubusercontent.com/CAREamics/.github/main/profile/images/banner_careamics.png" width=400>
@@ -48,9 +50,6 @@
 #   
 # </div>
 #
-
-# %% [markdown] tags=[]
-# ### Mandatory actions
 
 # %% [markdown] tags=[]
 # <div class="alert alert-danger">
@@ -87,23 +86,26 @@ from careamics.transforms import N2VManipulate
 # In CAREamics, the transformation is called `N2VManipulate`. It has different 
 # parameters: `roi_size`, `masked_pixel_percentage` and `strategy`.
 
+
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3><b>Task 1: Explore the N2VManipulate parameters</b></h3>
+#
+# Can you understand what `roi_size`, `masked_pixel_percentage`, and `strategy` do? 
+# What can go wrong if they are too small or too high?
+#
+# Try to play with parameters and run the cell below to observe the effects!
+#
+# *hint: if you get a bit lost, check the documentation of `N2VManipulate` by hovering over it. If you get reaaaaaally lost, you find detailed explanations in the solution notebook.*
+# </div>
+
 # %% tags=[]
 # Define a patch size for this exercise
 dummy_patch_size = 10
 
 # Define masking parameters
-roi_size = 3
-masked_pixel_percentage = 10
-strategy = 'uniform'
-
-# %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3><b>Task 1: Explore the N2VManipulate parameters</b></h3>
-#
-# Can you understand what `roi_size` and `masked_pixel_percentage` do? What can go wrong if they are too small or too high?
-#
-#
-# Run the cell below to observe the effects!
-# </div>
+roi_size = 3 # <-- try changing this
+masked_pixel_percentage = 1 # <-- try changing this
+strategy = 'uniform' # <-- select between 'uniform' and 'median'
 
 # %% tags=[]
 # Create a dummy patch
@@ -129,19 +131,20 @@ ax[0].title.set_text("Manipulated patch")
 ax[1].imshow(mask[0], cmap="gray")
 ax[1].title.set_text("Mask")
 
-# %% [markdown] tags=[]
-# <div class="alert alert-block alert-warning"><h3>Questions: Noise2Void masking strategy</h3>
-#
-#
-# So what's really happening on a technical level? 
-#
-# In the basic setting N2V algorithm replaces certain pixels with the values from the vicinity
-# Other masking stategies also exist, e.g. median, where replacement value is the median off all the pixels inside the region of interest.
-#
-# Feel free to play around with the ROI size, patch size and masked pixel percentage parameters
-#
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3>Answer: Noise2Void masking strategy</h3>
+
+# Here's a breakdown of the parameters we mentioned above:
+
+# - `roi_size`: This parameter defines the size of the region of interest (ROI) around each pixel that can be used for "sampling" the masked pixels.
+# For instance, a 5x5 ROI would mean that to replace a masked pixel we consider the 5x5 pixels around it.
+# A larger ROI makes the replacement harder, forcing the network to extrapolate more semantic content from the input image. However, if the ROI is too large, it may include irrelevant/uncorrelated information, leading to suboptimal masking.
+# - `masked_pixel_percentage`: This parameter controls the fraction of pixels in the patch that will be masked. A higher percentage means more pixels will be replaced, which can make the task more challenging for the network. However, if too many pixels are masked, it may lead to insufficient context for accurate prediction.
+# - `strategy`: This parameter defines how the masked pixels are replaced. The 'uniform' strategy replaces the masked pixel with a value randomly sampled from the ROI.
+# The 'median' strategy replaces the masked pixel with the median of all the pixels inside the region of interest.
+
 # </div>
-#
+
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-success"><h1><b>Checkpoint 1: N2V masking</b></h1>
@@ -184,8 +187,8 @@ plt.imshow(val_image, cmap="gray")
 # %% [markdown] tags=[]
 # ## Part 3: Create a configuration
 #
-# CAREamics can be configured either from a yaml file, or with an explicitly created config object.
-# In this note book we will create the config object using helper functions. CAREamics will 
+# CAREamics can be configured either from a `.yaml` file, or with an explicitly created config object.
+# In this note book we will create the config object using helper functions. CAREamics will automatically 
 # validate all the parameters and will output explicit error if some parameters or a combination of parameters isn't allowed. It will also provide default values for missing parameters.
 #
 # The helper function limits the parameters to what is relevant for N2V, here is a break down of these parameters:
@@ -198,9 +201,9 @@ plt.imshow(val_image, cmap="gray")
 # - `num_epochs`: number of epochs
 #
 #
-# There are also optional parameters, for more fine grained details:
+# There are also optional parameters, for more fine grained customization, including:
 #
-# - `use_augmentations`: whether to use augmentations (flip and rotation)
+# - `use_augmentations`: whether to use default augmentations (flip and rotation)
 # - `use_n2v2`: whether to use N2V2, a N2V variant (see optional exercise)
 # - `n_channels`: the number of channels 
 # - `roi_size`: size of the N2V manipulation region (remember that parameter?)
@@ -215,7 +218,7 @@ plt.imshow(val_image, cmap="gray")
 # %% tags=[]
 # Create a configuration using the helper function
 training_config = create_n2v_configuration(
-    experiment_name="dl4mia_n2v_sem",
+    experiment_name="YOUR_NAME_n2v_exp", # <-- change YOUR_NAME
     data_type="tiff",
     axes="YX",
     patch_size=[64, 64],
@@ -322,12 +325,22 @@ ax[1].imshow(preds.squeeze()[y_start:y_end, x_start:x_end], cmap="gray")
 # </div>
 
 # %% tags=[]
-plt.imshow(preds.squeeze() - train_image, cmap="gray")
+residuals = preds.squeeze() - train_image
+plt.imshow(residuals, cmap="gray")
+
+# %% tags=[]
+# Show a close up image
+y_start = 200
+y_end = 450
+x_start = 600
+x_end = 850
+
+plt.imshow(residuals[y_start:y_end, x_start:x_end], cmap="gray")
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3><b>Task 4(Optional): Improving the results</b></h3>
 #
-# CAREamics configuration won't allow you to use parameters which are clearly wrong. However, there are many parameters that can be tuned to improve the results. Try to play around with the `roi_size` and `masked_pixel_percentage` and see if you can improve the results.
+# CAREamics configuration won't allow you to use parameters which are clearly wrong. However, there are many parameters that can be tuned to improve the results. Go back to the training part and try to play around with the `roi_size` and `masked_pixel_percentage` and see if you can improve the results.
 #
 # Do the fine-grained structures observed in during the closer look at the image disappear?
 #
@@ -370,8 +383,8 @@ train_image[:128, :128].shape
 careamist.export_to_bmz(
     path_to_archive="n2v_model.zip",
     input_array=train_image[:128, :128],
-    friendly_model_name="SEM_N2V",
-    authors= [{"name": "Jane", "affiliation": "Doe University"}],
+    friendly_model_name="YOUR_NAME_N2V", # <-- change YOUR_NAME
+    authors= [{"name": "YOUR_NAME", "affiliation": "YOUR_AFFILIATION"}], # <-- change YOUR_NAME and YOUR_AFFILIATION
     general_description='',
     data_description='',
 )
@@ -431,9 +444,9 @@ x_end = 1024
 
 # Feel free to play around with the visualization
 _, ax = plt.subplots(1, 2, figsize=(10, 5))
-ax[0].imshow(preds[0, 0, 600:700, 300:400], vmin=vmin, vmax=vmax)
+ax[0].imshow(preds[0, 0, 600:700, 300:400], vmin=vmin, vmax=vmax, cmap="gray")
 ax[0].title.set_text("Predicted")
-ax[1].imshow(mito_image[0, 600:700, 300:400], vmin=vmin, vmax=vmax)
+ax[1].imshow(mito_image[0, 600:700, 300:400], vmin=vmin, vmax=vmax, cmap="gray")
 ax[1].title.set_text("Original")
 
 # %% [markdown] tags=[]
@@ -449,7 +462,7 @@ ax[1].title.set_text("Original")
 #
 # - We predicted on the same image we trained on, is that a good idea?
 #
-# - Can you reuse the model on another image?
+# - Can you reuse the model on different images?
 #
 # - Can you train on images with multiple channels? RGB images? Biological channels (GFP, RFP, DAPI)?
 #
