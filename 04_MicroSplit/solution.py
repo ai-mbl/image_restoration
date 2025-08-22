@@ -209,7 +209,7 @@ val_dloader = DataLoader(
 # - Can you tell in which part of the model the different patches shown below are used?
 # - What do the input patches show? Why are there multiple inputs?
 # - Why do we need targets? How do we use such targets? 
-#
+# %% [markdown] tags=["solution"]
 # *Answers*
 # - First columns contain, respectively, the superimposed input patch, and the additional input patches for Lateral Contextualization (LC). The later columns show, instead, the target unmixed patches.
 # - Input patches represent the image obtained by superimposing (mixing) the signal coming from different labeled structures. The additional LC inputs are used to enhance the field of view and, hence, the semantic context processed by the network.
@@ -226,7 +226,7 @@ plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples
 # Below are 2 examples of superimposed labeled structures with the correspondent ground truths. 
 # 1. Which one you think it's harder to unmix? Why?
 # 2. What are, in your opinion, features of the input data that would make unmixing more difficult? 
-#
+# %% [markdown] tags=["solution"]
 # *Answers*
 # 1. (b), because it shows more morphologically similar structures. MicroSplit is a content-aware method, i.e., it extracts semantic information regarding morphology, shape, brightness, etc., from the input data. Since structurally similar signal share many semantic features, the unmixing task becomes more challenging.
 # 2. Semantic similarity between labeled structures, difference in brightness/intensity between labeled structures, colocalization, ...
@@ -874,7 +874,8 @@ print("Here the crop you selected:")
 #
 # *Hint1*: for CNN, think about how convolution works at the image borders... <br>
 # *Hint2*: for VAE, reflect on the sampling happening in the latent space....
-#
+
+# %% [markdown] tags=["solution"]
 # *Answers*
 # Receptive field of CNN, Intensity mismatch due to different sampling, ...
 #

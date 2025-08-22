@@ -173,7 +173,7 @@ max_height = low_snr.shape[2]
 max_width = low_snr.shape[3]
 
 index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images, step=1, value=0
+    description="Image index: ", min=0, max=num_images-1, step=1, value=0
 )
 vertical_widget = widgets.IntRangeSlider(
     description="Vertical crop",
@@ -704,7 +704,7 @@ max_height = test_data.shape[2]
 max_width = test_data.shape[3]
 
 index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images, step=1, value=0
+    description="Image index: ", min=0, max=num_images-1, step=1, value=0
 )
 vertical_widget = widgets.IntRangeSlider(
     description="Vertical crop",
@@ -797,7 +797,7 @@ max_height = test_data.shape[2]
 max_width = test_data.shape[3]
 
 index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images, step=1, value=0
+    description="Image index: ", min=0, max=num_images-1, step=1, value=0
 )
 vertical_widget = widgets.IntRangeSlider(
     description="Vertical crop",
@@ -892,7 +892,7 @@ max_height = test_data.shape[2]
 max_width = test_data.shape[3]
 
 index_slider = widgets.BoundedIntText(
-    description="Image index: ", min=0, max=num_images, step=1, value=0
+    description="Image index: ", min=0, max=num_images-1, step=1, value=0
 )
 vertical_widget = widgets.IntRangeSlider(
     description="Vertical crop",

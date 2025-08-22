@@ -16,7 +16,7 @@ fi
 if [[ "$CONDA_DEFAULT_ENV" == "$ENV" ]]; then
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
     pip install git+https://github.com/CAREamics/MicroSplit-reproducibility.git
-    pip install tensorboard scikit-learn gdown jupyterlab
+    pip install tensorboard torch_tb_profiler scikit-learn gdown jupyterlab
     # Using pytorch-lightning 2.4.0 causes bugs in tensorboard and interupting training.
     pip install pytorch-lightning==2.3.3
     pip install git+https://github.com/dlmbl/dlmbl-unet
@@ -28,12 +28,32 @@ fi
 
 # Download the data
 # CARE + N2V
-python download_careamics_portfolio.py
+if [ ! -d "data/denoising-N2V_SEM.unzip" ] || [ ! -d "data/denoising-CARE_U2OS.unzip" ] || [ ! -d "data/denoising-N2N_SEM.unzip" ]; then
+    echo "Downloading CARE + N2V data..."
+    python download_careamics_portfolio.py
+else
+    echo "CARE, N2V + N2N data already exists, skipping download."
+fi
+
 cd data/
 # COSDD
-wget "https://s3.ap-northeast-1.wasabisys.com/gigadb-datasets/live/pub/10.5524/100001_101000/100888/03-mito-confocal/mito-confocal-lowsnr.tif"
+if [ ! -f "mito-confocal-lowsnr.tif" ]; then
+    echo "Downloading COSDD data..."
+    wget "https://s3.ap-northeast-1.wasabisys.com/gigadb-datasets/live/pub/10.5524/100001_101000/100888/03-mito-confocal/mito-confocal-lowsnr.tif"
+else
+    echo "COSDD data already exists, skipping download."
+fi
 cd ../
-mkdir 03_COSDD/checkpoints
+
+# COSDD checkpoints
+if [ ! -d "03_COSDD/checkpoints" ]; then
+    mkdir -p 03_COSDD/checkpoints
+fi
 cd 03_COSDD/checkpoints
-gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
+if [ -z "$(ls -A . 2>/dev/null)" ]; then
+    echo "Downloading COSDD checkpoints..."
+    gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
+else
+    echo "COSDD checkpoints already exist, skipping download."
+fi
 cd ../../

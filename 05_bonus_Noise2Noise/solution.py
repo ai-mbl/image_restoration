@@ -3,7 +3,7 @@
 # %% [markdown] tags=[]
 # # Noise2Noise
 #
-# CARE network you trained in the first restoration exercises require that you acquire pairs
+# CARE networks like the one you trained in the first restoration exercise require that you acquire pairs
 # of high and low SNR. However, this often not possible. One such case is when it is simply
 # not possible to acquire high SNR images.
 #
@@ -11,14 +11,14 @@
 # is a self-supervised method that can be trained on noisy images. But there are other 
 # supervised approaches that can be trained on noisy images only, such as Noise2Noise. 
 #
-# Noise2Noise relies on the same assumption than Noise2Void: the noise is pixel-independent.
+# Noise2Noise relies on the same assumption as Noise2Void: the noise is pixel-independent.
 # Therefore, if you supervise your network to guess a noisy image from another one, the network
 # will converge to a denoised image. Of course, this only works if the two noisy images are
 # very similar.
 #
 # To acquire data for Noise2Noise, one can simply image the same region of interest twice!
 # Indeed, pixel-independent noise (as opposed to structured noise) will be completely independent
-# between neighboring pixels and as well as between the two noisy images.
+# between neighboring pixels as well as between the two noisy images.
 #
 # In this notebook, we will again use the [Careamics](https://careamics.github.io) library.
 #
@@ -92,7 +92,8 @@ ax[1].set_title("Train image lowest noise level")
 # Visualize each different noise level!
 #
 # </div>
-#
+
+# %% [markdown] tags=[]
 # <hr style="height:2px;">
 #
 # ## Part 2: Create the configuraion

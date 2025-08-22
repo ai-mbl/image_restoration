@@ -3,7 +3,7 @@
 # %% [markdown] tags=[]
 # # Content-aware image restoration
 #
-# Fluorescence microscopy is constrained by the microscope's optics, fluorophore chemistry, and the sample's photon tolerance. These constraints require balancing imaging speed, resolution, light exposure, and depth. CARE demonstrates how Deep learning can extend the range of biological phenomena observable by microscopy when any of these factor becomes limiting.
+# Fluorescence microscopy is constrained by the microscope's optics, fluorophore chemistry, and the sample's photon tolerance. These constraints require balancing imaging speed, resolution, light exposure, and depth. CARE demonstrates how Deep Learning can extend the range of biological phenomena observable by microscopy when any of these factor becomes limiting.
 #
 # **Reference**: Weigert, et al. "Content-aware image restoration: pushing the limits of fluorescence microscopy." Nature methods 15.12 (2018): 1090-1097. doi:[10.1038/s41592-018-0216-7](https://www.nature.com/articles/s41592-018-0216-7)
 #
@@ -11,13 +11,13 @@
 # %% [markdown] tags=[]
 # ### CARE
 #
-# In this first exercise we will train a CARE model for a 2D denoising task. CARE stands for Content-Aware image REstoration, and is a supervised method in which we use pairs of degraded and high quality image to train a particular task. The original paper demonstrated improvement of image quality on a variety of tasks such as image restoration or resolution improvement. Here, we will apply CARE to denoise images acquired at low laser power in order to recover the biological structures present in the data!
+# In this first exercise we will train a CARE model for a 2D denoising task. CARE stands for Content-Aware image REstoration, and is a supervised method in which we use pairs of degraded and high quality images to train a particular task. The original paper demonstrated improvement of image quality on a variety of tasks such as image restoration or resolution improvement. Here, we will apply CARE to denoise images acquired at low laser power in order to recover the biological structures present in the data!
 #
 # <p align="center">
 #     <img src="nb_data/img_intro.png" alt="Denoising task" class="center"> 
 # </p>
 #
-# We'll use the UNet model that we built in the semantic segmentation exercise and use a different set of functions to train the model for restoration rather than segmentation.
+# We'll use the UNet model that we built previously and use a different set of functions to train the model for restoration rather than segmentation.
 #
 #
 # <div class="alert alert-block alert-success"><h3>Objectives</h3>
@@ -120,7 +120,7 @@ print(f"Number of test files: {len(test_image_files)}")
 # %% [markdown] tags=[]
 # ### Patching function
 #
-# In the majority of cases microscopy images are too large to be processed at once and need to be divided into smaller patches. We will define a function that takes image and target arrays and extract random (paired) patches from them.
+# In the majority of cases microscopy images are too large to be processed at once and need to be divided into smaller patches. We will define a function that takes image and target arrays and extracts random (paired) patches from them.
 #
 # The method is a bit scary because accessing the whole patch coordinates requires some magical python expressions. 
 #
@@ -275,7 +275,7 @@ plt.tight_layout()
 # </div>
 
 # %% [markdown] tags=["solution"]
-# Normalization brings the data's values into a standardized range, making the magnitude of gradients suitable for the default learning rate. 
+# Normalization brings the data's values into a standardized range, making the default weight initialization appropriate and magnitude of gradients suitable for the default learning rate. 
 # The target noise-free images have a much higher intensity than the noisy input images.
 # They need to be normalized using their own statistics to bring them into the same range.
 
@@ -448,7 +448,7 @@ assert train_dataset[42][1].dtype == np.float32, "Target patch dtype is wrong"
 # %% [markdown] tags=[]
 # The training and validation data are stored as an instance of a `Dataset`. 
 # This describes how each image should be loaded.
-# Now we will prepare them to be fed into the model with a `Dataloader`.
+# Now we will prepare them to be fed into the model with a `DataLoader`.
 #
 # This will use the Dataset to load individual images and organise them into batches.
 # The Dataloader will shuffle the data at the start of each epoch, outputting different random batches.
@@ -466,7 +466,7 @@ val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 # 1) Loading the images.
 # 2) Cropping them into patches.
 # 3) Checking the patches visually.
-# 4) Creating an instance of a pytorch dataset and dataloader.
+# 4) Creating an instance of a pytorch Dataset and DataLoader.
 #
 # You'll see a similar preparation procedure followed for most deep learning vision tasks.
 #
@@ -479,7 +479,7 @@ val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 # %% [markdown] tags=[]
 # ## Part 2: Training the model
 #
-# Image restoration task is very similar to the semantic segmentation task we have done in the previous exercise. We can use the same UNet model and just need to adapt a few things.
+# Image restoration task is very similar to the segmentation task we have done in a previous exercise. We can use the same UNet model and just need to adapt a few things.
 #
 # %% [markdown] tags=[]
 # ![image](nb_data/carenet.png)
@@ -587,6 +587,7 @@ for epoch in range(n_epochs):
 
         if i % 10 == 0:
             print(f"Epoch: {epoch}, Batch: {i}, Loss: {train_loss.item()}")
+            tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=epoch * len(train_dataloader) + i)
 
     model.eval()
 
@@ -601,7 +602,6 @@ for epoch in range(n_epochs):
 
         # log tensorboard
         step = epoch * len(train_dataloader)
-        tb_logger.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=step)
         tb_logger.add_scalar(tag="val_loss", scalar_value=val_loss, global_step=step)
 
         # we always log the last validation images
@@ -624,7 +624,7 @@ for epoch in range(n_epochs):
 plt.figure(figsize=(10, 5))
 plt.plot(train_losses)
 plt.plot(val_losses)
-plt.xlabel("Iterations")
+plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(["Train loss", "Validation loss"])
 
@@ -747,7 +747,7 @@ plt.tight_layout()
 # 2) Ran a prediction loop on the test data.
 # 3) Examined the outputs.
 #
-# This notebook has shown how matched pairs of noisy and clean images can train a UNet to denoise, but what if we don't have any clean images? In the next notebook, we'll try Noise2Void, a method for training a UNet to denoise with only noisy images.
+# This notebook has shown how matched pairs of noisy and clean images can train a UNet to denoise.
 # </div>
 
 # %% [markdown] tags=[]
