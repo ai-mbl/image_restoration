@@ -85,7 +85,7 @@ def find_dark_patch(low_snr):
     slide_and_index = widgets.VBox([index_and_ac, sliders])
 
     layout = widgets.VBox([slide_and_index, interactive_output_widget])
-    display(layout)
+    return layout
 
 
 def plot_samples(test_data, samples):
@@ -130,11 +130,11 @@ def plot_samples(test_data, samples):
         fig, ax = plt.subplots(2, 2, figsize=(8, 8))
         ax[0, 0].imshow(test_data[image_index][crop], vmin=vmin, vmax=vmax)
         ax[0, 0].set_title("Input")
-        for i in range(n_samples):
-            ax[(i + 1) // 2, (i + 1) % 2].imshow(
+        for i in range(3):
+            ax.flatten()[i + 1].imshow(
                 samples[image_index][i][crop], vmin=vmin, vmax=vmax
             )
-            ax[(i + 1) // 2, (i + 1) % 2].set_title(f"Sample {i+1}")
+            ax.flatten()[i + 1].set_title(f"Sample {i+1}")
         plt.show()
 
     interactive_output_widget = interactive_output(
@@ -151,7 +151,7 @@ def plot_samples(test_data, samples):
 
     layout = widgets.VBox([slide_and_index, interactive_output_widget])
 
-    display(layout)
+    return layout
 
 
 def plot_mmse(test_data, MMSEs, samples):
@@ -215,8 +215,7 @@ def plot_mmse(test_data, MMSEs, samples):
     slide_and_index = widgets.VBox([index_slider, sliders])
 
     layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-    display(layout)
+    return layout
 
 
 def plot_direct(test_data, direct, MMSEs):
@@ -280,5 +279,4 @@ def plot_direct(test_data, direct, MMSEs):
     slide_and_index = widgets.VBox([index_slider, sliders])
 
     layout = widgets.VBox([slide_and_index, interactive_output_widget])
-
-    display(layout)
+    return layout

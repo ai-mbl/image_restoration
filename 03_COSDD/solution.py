@@ -52,7 +52,7 @@ assert torch.cuda.is_available()
 #
 # ### Task 1.1.
 #
-# The low signal-to-noise ratio data that we will be denoising has been downloaded and stored in the `../data` directory as `mito-confocal-lowsnr.tif`. We will load it in the following cell using `utils.load_data`. This requires four arguments that are described below. `paths`, `axes` and `n_dimensions` have already been entered. 
+# The low signal-to-noise ratio data that we will be denoising has been downloaded and stored in the `/mnt/efs/aimbl_2025/data/` directory as `mito-confocal-lowsnr.tif`. We will load it in the following cell using `utils.load_data`. This requires four arguments that are described below. `paths`, `axes` and `n_dimensions` have already been entered. 
 #
 # Enter the file name for `patterns`.
 # </div>
@@ -68,7 +68,7 @@ assert torch.cuda.is_available()
 
 # %% tags=["task"]
 # load the data
-paths = "../data"
+paths = "/mnt/efs/aimbl_2025/data/"
 patterns = ... # Enter the data's file name here
 axes = "SYX"
 n_dimensions = 2
@@ -78,7 +78,7 @@ low_snr, original_sizes = utils.load_data(
 
 # %% tags=["solution"]
 # load the data
-paths = "../data"
+paths = "/mnt/efs/aimbl_2025/data/"
 patterns = "mito-confocal-lowsnr.tif"
 axes = "SYX"
 n_dimensions = 2
@@ -161,7 +161,8 @@ print(f"Noisy data dtype: {low_snr.dtype}")
 # </div>
 
 # %% tags=[]
-iplots.find_dark_patch(low_snr)
+layout = iplots.find_dark_patch(low_snr)
+display(layout)
 
 # %% [markdown] tags=[]
 # In the autocorrelation plot, all of the squares should be white except for the top row. The autocorrelation of the square at (0, 0) will always be 1.0 because a pixel's value will always be perfectly correlated with itself. We define this type of noise as correlated along the x axis.
@@ -434,7 +435,7 @@ trainer = pl.Trainer(
     max_epochs=max_epochs,
     max_time=max_time,
     callbacks=[EarlyStopping(patience=patience, monitor="elbo/val")],
-    precision="32",
+    precision="16",
     plugins=[LightningEnvironment()],
 )
 
@@ -455,7 +456,7 @@ trainer = pl.Trainer(
     max_epochs=max_epochs,
     max_time=max_time,
     callbacks=[EarlyStopping(patience=patience, monitor="elbo/val")],
-    precision="bf16-mixed",
+    precision="16",
     plugins=[LightningEnvironment()],
 )
 
@@ -487,7 +488,7 @@ torch.cuda.empty_cache()
 
 # %% tags=[]
 # load the data
-paths = "../data"
+paths = "/mnt/efs/aimbl_2025/data/"
 patterns = "mito-confocal-lowsnr.tif"
 axes = "SYX"
 n_dimensions = 2
@@ -612,7 +613,8 @@ samples = torch.stack(samples, dim=1).half()
 # </div>
 
 # %% tags=[]
-iplots.plot_samples(test_data, samples)
+layout = iplots.plot_samples(test_data, samples)
+display(layout)
 
 # %% [markdown] tags=[]
 # ### 8.2 MMSE estimate
@@ -644,7 +646,8 @@ samples = torch.stack(samples, dim=1).half()
 MMSEs = torch.mean(samples, dim=1)
 
 # %% tags=[]
-iplots.plot_mmse(test_data, MMSEs, samples)
+layout = iplots.plot_mmse(test_data, MMSEs, samples)
+display(layout)
 
 
 # %% [markdown] tags=[]
@@ -679,7 +682,8 @@ direct = predictor.predict(hub, predict_loader)
 direct = torch.cat(direct, dim=0).half()
 
 # %% tags=[]
-iplots.plot_direct(test_data, direct, MMSEs)
+layout = iplots.plot_direct(test_data, direct, MMSEs)
+display(layout)
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
