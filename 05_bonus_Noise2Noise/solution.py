@@ -3,24 +3,31 @@
 # %% [markdown] tags=[]
 # # Noise2Noise
 #
-# CARE networks like the one you trained in the first restoration exercise require that you acquire pairs
-# of high and low SNR. However, this often not possible. One such case is when it is simply
-# not possible to acquire high SNR images.
+# CARE networks like the one you trained in the first image restoration exercise require that you acquire pairs
+# of high and low SNR. However, this often extremely challenging or, even, not possible. One such case is when it is simply
+# not possible to acquire high SNR images as the sample is too much susceptible to illumination.
 #
-# What to do when you are stuck with just noisy images? We also have seen Noise2Void, which
+# What to do when you are stuck with just noisy images? We have already seen Noise2Void, which
 # is a self-supervised method that can be trained on noisy images. But there are other 
 # supervised approaches that can be trained on noisy images only, such as Noise2Noise. 
 #
-# Noise2Noise relies on the same assumption as Noise2Void: the noise is pixel-independent.
-# Therefore, if you supervise your network to guess a noisy image from another one, the network
-# will converge to a denoised image. Of course, this only works if the two noisy images are
-# very similar.
+# Noise2Noise relies on 2 key assumptions: 
+# 1. as Noise2Void: **the noise must be pixel-independent**.
+# 2. the noisy images used for training must be paired, with each pair containing very similar images (e.g., different acquisitions of the same FOV).
+#
+# By forcing the network to guess a noisy image from another one, the network learn to predict a corresponding denoised image. 
+# Why? Because as the noise is assumed to be pixel-independent, the network is not able to predict/reproduce it,
+# and hence the best it can do is to predict/reproduce the underlying signal. 
+# Once more, this only works if the two noisy images are very similar, as we want the underlying signal to be the same.
 #
 # To acquire data for Noise2Noise, one can simply image the same region of interest twice!
-# Indeed, pixel-independent noise (as opposed to structured noise) will be completely independent
-# between neighboring pixels as well as between the two noisy images.
+# Indeed, in many microscopy modalities the noise can be assumed to be more or less pixel-independent (shot + readout noise).
 #
 # In this notebook, we will again use the [Careamics](https://careamics.github.io) library.
+#
+# <p align="center">
+#     <img src="https://raw.githubusercontent.com/CAREamics/.github/main/profile/images/banner_careamics.png" width=400>
+# </p>
 #
 # ## Reference
 #
@@ -73,6 +80,14 @@ from careamics.config import create_n2n_configuration
 #
 # In this cell we can see the different levels of noise in the SEM dataset
 
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3>Task 1: Explore the data</h3>
+#
+# Here we load a training image to visualize it. Can you visually tell if the noise is pixel-independent?
+# In case you are not sure, try to think how you would experimentally verify this assumption (you do not need to actually do it, just think about it remembering what we saw in previous exercises).
+#
+# </div>
+
 # %% tags=[]
 # Load images
 root_path = Path("./../data")
@@ -80,18 +95,27 @@ train_image = tifffile.imread(root_path / "denoising-N2N_SEM.unzip/SEM/train.tif
 print(f"Train image shape: {train_image.shape}")
 
 # plot image
-fig, ax = plt.subplots(1, 2, figsize=(10, 10))
-ax[0].imshow(train_image[0,100:356, 500:756], cmap="gray")
-ax[0].set_title("Train image highest noise level")
-ax[1].imshow(train_image[-1, 100:356, 500:756], cmap="gray")
-ax[1].set_title("Train image lowest noise level")
+vmin, vmax = np.percentile(train_image, (1, 99))
+fig, ax = plt.subplots(3, 3, figsize=(15, 15), constrained_layout=True)
+fig.patch.set_facecolor('black')
+ax[0, 0].imshow(train_image[6, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[0, 0].set_title("Train image - Lowest noise level", color='white')
+ax[0, 0].axis("off")
+ax[0, 1].axis("off")
+ax[0, 2].axis("off")
+ax[1, 0].imshow(train_image[5, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[1, 0].axis("off")
+ax[1, 1].imshow(train_image[4, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[1, 1].axis("off")
+ax[1, 2].imshow(train_image[3, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[1, 2].axis("off")
+ax[2, 0].imshow(train_image[2, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[2, 0].axis("off")
+ax[2, 1].imshow(train_image[1, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[2, 1].axis("off")
+ax[2, 2].imshow(train_image[0, :1024, :1024], cmap="gray", vmin=vmin, vmax=vmax)
+ax[2, 2].axis("off")
 
-# %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h3>Task 1: Explore the data</h3>
-#
-# Visualize each different noise level!
-#
-# </div>
 
 # %% [markdown] tags=[]
 # <hr style="height:2px;">
@@ -111,7 +135,7 @@ training_config = create_n2n_configuration(
     logger="tensorboard"
 )
 
-# Visualize training configuration
+# Visualize training configuration (also includes default parameters)
 print(training_config)
 
 # %% [markdown] tags=[]
@@ -134,20 +158,23 @@ careamist = CAREamist(source=training_config)
 #
 # </div>
 
-# %% tags=[]
-# Create the training data and targets
-train_data = train_image[[2, 2, 2, 2, 2, 3, 3, 3, 3, 3], ...]
-train_target = train_image[[0, 1, 3, 4, 5, 0, 1, 3, 4, 5], ...]
-
 # %% tags=["task"]
-careamist.train(
-    train_source=...,
-    train_target=...
-)
+# Create the training data and targets pairs
+data1 = train_image[[2, 2, 2, 2, 2, 3, 3, 3, 3, 3], ...]
+data2 = train_image[[0, 1, 3, 4, 5, 0, 1, 3, 4, 5], ...]
+train_source = # YOUR CODE HERE
+train_target = # YOUR CODE HERE
 
 # %% tags=["solution"]
+# Create the training data and targets pairs
+data1 = train_image[[2, 2, 2, 2, 2, 3, 3, 3, 3, 3], ...]
+data2 = train_image[[0, 1, 3, 4, 5, 0, 1, 3, 4, 5], ...]
+train_source = data1
+train_target = data2
+
+# %% tags=[]
 careamist.train(
-    train_source=train_data,
+    train_source=train_source,
     train_target=train_target
 )
 
@@ -174,20 +201,26 @@ prediction = careamist.predict(source=test_image[2], tile_size=(256, 256), axes=
 # ### Visualize predictions
 
 # %% tags=[]
-fig, ax = plt.subplots(1, 2, figsize=(10, 10))
+fig, ax = plt.subplots(1, 2, figsize=(10, 10), constrained_layout=True)
+fig.patch.set_facecolor('black')
 ax[0].imshow(test_image[-1], cmap="gray")
-ax[0].set_title("Test image lowest noise level")
+ax[0].set_title("Test image lowest noise level", color='white')
+ax[0].axis("off")
 ax[1].imshow(prediction[0, 0], cmap="gray")
-ax[1].set_title("Prediction")
+ax[1].set_title("Prediction", color='white')
+ax[1].axis("off")
 
 # %% tags=[]
-fi, ax = plt.subplots(1, 2, figsize=(15, 15))
-vim  = test_image[0].min()
+fig, ax = plt.subplots(1, 2, figsize=(15, 15), constrained_layout=True)
+fig.patch.set_facecolor('black')
+vmin  = test_image[0].min()
 vmax = test_image[0].max()
-ax[0].imshow((prediction.squeeze())[1000:1128, 500:628], cmap="gray",vmin=vim, vmax=vmax)
-ax[0].set_title("Prediction")
-ax[1].imshow(test_image[-1].squeeze()[1000:1128, 500:628], cmap="gray", vmin=vim, vmax=vmax)
-ax[1].set_title("Test image lowest noise level")
+ax[0].imshow((prediction.squeeze())[1000:1128, 500:628], cmap="gray",vmin=vmin, vmax=vmax)
+ax[0].set_title("Prediction", color='white')
+ax[1].imshow(test_image[-1].squeeze()[1000:1128, 500:628], cmap="gray", vmin=vmin, vmax=vmax)
+ax[1].set_title("Test image lowest noise level", color='white')
+ax[0].axis("off")
+ax[1].axis("off")
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 3: Different noise pairs</h3>
