@@ -48,7 +48,6 @@ def find_dark_patch(low_snr):
     horizontal_widget.observe(reset_toggle, "value")
 
 
-    ### Explore slices of the data here
     def plot_crop(image_index, horizontal, vertical, plot_ac=False):
         left, right = horizontal[0], horizontal[1]
         top, bottom = vertical[1], vertical[0]
@@ -128,14 +127,14 @@ def plot_samples(test_data, samples):
         top = max_height - top
         bottom = max_width - bottom
         crop = (0, slice(top, bottom), slice(left, right))
-        fig, ax = plt.subplots(2, 4, figsize=(16, 8))
+        fig, ax = plt.subplots(2, 2, figsize=(8, 8))
         ax[0, 0].imshow(test_data[image_index][crop], vmin=vmin, vmax=vmax)
         ax[0, 0].set_title("Input")
         for i in range(n_samples):
-            ax[(i + 1) // 4, (i + 1) % 4].imshow(
+            ax[(i + 1) // 2, (i + 1) % 2].imshow(
                 samples[image_index][i][crop], vmin=vmin, vmax=vmax
             )
-            ax[(i + 1) // 4, (i + 1) % 4].set_title(f"Sample {i+1}")
+            ax[(i + 1) // 2, (i + 1) % 2].set_title(f"Sample {i+1}")
         plt.show()
 
     interactive_output_widget = interactive_output(

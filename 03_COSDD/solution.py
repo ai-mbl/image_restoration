@@ -515,7 +515,7 @@ predict_loader = torch.utils.data.DataLoader(
 #
 # ### Task 7.1.
 #
-# Our model was only trained for 15 minutes. This is long enough to get some denoising results, but a model trained for longer would do better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
+# Our model was only trained for 15 minutes. This is long enough to get some denoising results, but a model trained for longer would do a lot better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
 #
 # Once you reach the end of the notebook, return to this cell to load a model that has been trained for 3.5 hours by uncommenting line 3, then run the notebook again to see how much difference the extra training time makes. 
 # </div>
@@ -580,7 +580,7 @@ predictor = pl.Trainer(
 # ## 8. Denoise
 # In this section, we will look at how COSDD does inference. 
 #
-# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 50 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
+# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 10 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
 
 # %% [markdown] tags=[]
 # ### 8.1 Random sampling 
@@ -624,13 +624,13 @@ iplots.plot_samples(test_data, samples)
 #
 # ### Task 8.2.
 #
-# In the next cell, we will sample 50 randomly denoised estimates. 
+# In the next cell, we will sample 10 randomly denoised estimates. 
 # Explore their average - the MMSE estimate - to understand the smoothing effect of averaging so many samples.
 # </div>
 
 # %% tags=[]
 use_direct_denoiser = False
-n_samples = 50
+n_samples = 10
 
 hub.direct_pred = use_direct_denoiser
 
@@ -652,7 +652,7 @@ iplots.plot_mmse(test_data, MMSEs, samples)
 
 # %% [markdown] tags=[]
 # ### 8.3 Direct denoising
-# Sampling 50 images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
+# Sampling 10 or more images and averaging them is a very time consuming. If the direct denoiser was trained in a previous step, it can be used to directly output what the average denoised image would be for a given noisy image.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info">
@@ -661,7 +661,7 @@ iplots.plot_mmse(test_data, MMSEs, samples)
 #
 # Did you enable the direct denoiser before training? If so, set `use_direct_denoiser` to `True` to use the Direct Denoiser for inference. If not, go back to Section 7 to load the pretrained model and return here. 
 #
-# Notice how much quicker the direct denoiser is than generating the MMSE results. Visually inspect and explore the results in the same way as before, notice how similar the direct estimate and MMSE estimate are.
+# Notice how much quicker the direct denoiser is than generating the MMSE results. Visually inspect and explore the results in the same way as before.
 # </div>
 
 # %% tags=["task"]
@@ -680,6 +680,14 @@ direct = torch.cat(direct, dim=0).half()
 
 # %% tags=[]
 iplots.plot_direct(test_data, direct, MMSEs)
+
+# %% [markdown] tags=[]
+# <div class="alert alert-info">
+#
+# ### Task 8.4.
+#
+# If you haven't already, return to Task 7.1, uncomment line three and look at the results from a denoiser that was trained for 2 hours.
+# </div>
 
 # %% [markdown] tags=[]
 # ### 9. Incorrect receptive field
