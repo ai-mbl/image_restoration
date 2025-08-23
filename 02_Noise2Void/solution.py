@@ -364,9 +364,6 @@ fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 ax[0].imshow(train_image, cmap="gray")
 ax[1].imshow(new_preds.squeeze(), cmap="gray")
 
-# %% tags=[]
-train_image[:128, :128].shape
-
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-success"><h1>Checkpoint 3: Prediction</h1>
 # </div>

@@ -290,7 +290,7 @@ plt.tight_layout()
 #
 # </div>
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # Normalization brings the data's values into a standardized range, making the default weight initialization appropriate and magnitude of gradients suitable for the default learning rate. 
 # The target noise-free images have a much higher intensity than the noisy input images.
 # They need to be normalized using their own statistics to bring them into the same range.
@@ -888,6 +888,7 @@ ax[1, 1].set_title("Prediction")
 ax[2, 0].imshow(test_images_array[2].squeeze(), cmap="magma")
 ax[2, 0].set_title("Test image")
 ax[2, 1].imshow(predictions[2][0].squeeze(), cmap="magma")
+ax[1, 1].set_title("Prediction")
 plt.tight_layout()
 
 # %% [markdown] tags=[]
@@ -914,16 +915,23 @@ plt.tight_layout()
 # But there's a catch.
 # It relies on the assumption that the noise is unstructured.
 # Unstructured noise is uncorrelated over pixels, so has no streaky or line artifacts.
+# An example is shown below.
+#
+# <img src="./../02_Noise2Void/imgs/unstructured noise.png">
 #
 # [03_COSDD](../03_COSDD/exercise.ipynb) is also a denoiser trained using unpaired noisy images, but it can handle a specific form of structure.
 # That structure is row correlation.
-# Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy.
+# Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy, an example is shown below.
 # It can also be found when using sCMOS sensors.
 # The practical trade-off with N2V is that COSDD takes much longer to train.
+#
+# <img src="./../03_COSDD/resources/structured noise.png">
 #
 # [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
 # It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into multiple ones (up to 4 in our work).
 # Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
-#
+# An example of splitting is shown below.
+# 
+# <img src="./../04_MicroSplit/imgs/Fig1_b.png">
 #
 # </div>
