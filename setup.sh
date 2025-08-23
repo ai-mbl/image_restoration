@@ -35,25 +35,14 @@ else
     echo "CARE, N2V + N2N data already exists, skipping download."
 fi
 
-cd data/
+cd 03_COSDD/
 # COSDD
-if [ ! -f "mito-confocal-lowsnr.tif" ]; then
-    echo "Downloading COSDD data..."
-    wget "https://s3.ap-northeast-1.wasabisys.com/gigadb-datasets/live/pub/10.5524/100001_101000/100888/03-mito-confocal/mito-confocal-lowsnr.tif"
-else
-    echo "COSDD data already exists, skipping download."
+if [ ! -d "checkpoints" ]; then
+    echo "Adding pretrained checkpoint..."
+    mkdir checkpoints
 fi
-cd ../
-
-# COSDD checkpoints
-if [ ! -d "03_COSDD/checkpoints" ]; then
-    mkdir -p 03_COSDD/checkpoints
-fi
-cd 03_COSDD/checkpoints
-if [ -z "$(ls -A . 2>/dev/null)" ]; then
-    echo "Downloading COSDD checkpoints..."
-    gdown --folder 1_oUAxagFVin71xFASb9oLF6pz20HjqTr
-else
-    echo "COSDD checkpoints already exist, skipping download."
+cd checkpoints/
+if [ ! -d "mito-pretrained" ]; then
+    cp -r /mnt/efs/aimbl_2025/data/mito-pretrained .
 fi
 cd ../../
