@@ -131,7 +131,7 @@ training_config = create_n2n_configuration(
     axes="SYX",
     patch_size=[128, 128],
     batch_size=128,
-    num_epochs=50,
+    num_epochs=20,
     logger="tensorboard"
 )
 
