@@ -361,11 +361,12 @@ model = VAEModule(algorithm_config=experiment_config)
 # %% [markdown] tags=[]
 # ## 1.3. Train MicroSplit model
 #
-# In this section we will train out MicroSplit model using `lightning`.
+# In this section we will train out MicroSplit model using `lightning`. We have manually set the time limit to 20 minutes. This limit can be modified with the `max_time` argument.
 
 # %% tags=[]
 # create the Trainer
 trainer = Trainer(
+    max_time="00:00:20:00",
     max_epochs=training_config.num_epochs,
     accelerator="gpu",
     enable_progress_bar=True,
@@ -414,6 +415,13 @@ trainer.fit(
 # Do you remember what are the limitations of evaluating a model's perfomance on the validation set, instead?
 #
 # </div>
+
+# %% [markdown] tags=["solution"]
+# **Answer**
+# 
+# The validation set can be used to: control the learning rate, decide when to stop training and tune the hyperparameters.
+# Therefore, even though we did not adjust the model's parameters to minimize validation loss, the model is still technically fit to the validation data.
+# To properly test generalisation ability, we need to evaluate on data that was not used at all during training, and that data would be our test set.
 
 # %% [markdown] tags=[]
 # Before proceeding with the evaluation, let's focus once more on how MicroSplit works.
@@ -493,11 +501,12 @@ full_frame_evaluation(stitched_predictions[frame_idx], tar[frame_idx], inp[frame
 #
 # ***Note***: unfortunately we cannot provide pre-trained models for all the possible combinations of structures and exposures (if you're curious, there would be 33 combinations of such parameters 😌). Therefore, we provide one pre-trained model for each exposure time with 3 labeled structures to unmix (specifically, microtubules, nuclear membranes and centrosomes).
 #
-# Run the appropriate cells according to which checkpoint you want to use. If you want to stick with your current trained model, then simply skip this section.
+# So, run the cells in **Option A** to evaluate the model that you trained, or run the cells in **Option B** to evaluate a model that is pretrained.
 #
 # </div>
 
 # %% [markdown] tags=[]
+# ---
 # #### **Option A**: load your previous checkpoints
 #
 # In the same subdirectory of the current `exercise.ipynb` notebook, you should see a `checkpoints` folder. This contains the checkpoints of your past training run.
@@ -511,6 +520,11 @@ selected_ckpt = load_checkpoint_path("./checkpoints", best=True)
 print("✅ Selected model checkpoint:", selected_ckpt)
 
 # %% [markdown] tags=[]
+# #### End of **Option A**
+# ---
+
+# %% [markdown] tags=[]
+# ---
 # #### **Option B**: load pre-trained checkpoints
 #
 # As we mentioned above, we only have a few pre-trained checkpoints available. For this reason, we will need to reinstantiate configs, datasets, and model to make sure they coincide with one of the pre-trained models.
@@ -615,6 +629,10 @@ model = VAEModule(algorithm_config=experiment_config)
 
 # %% tags=[]
 load_pretrained_model(model, selected_ckpt)
+
+# %% [markdown] tags=[]
+# #### End of **Option B**
+# ---
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info"><h4><b>Task 2.1.2: Get test set predictions</b></h4>
@@ -883,7 +901,7 @@ print("Here the crop you selected:")
 # %% [markdown] tags=["solution"]
 # *Answers*
 # 
-# The receptive field of the CNN is limited so predictions have to be over a tiled image.
+# The receptive field of the CNN is limited, so predictions have to be over a tiled image.
 # CNNs require inputs to be padded at the sides to allow same-size convolutions.
 # This padding can lead to edge artifacts on each tile.
 # Stiching tiles back together will leave edge artifacts at the borders of tiles.
@@ -984,8 +1002,7 @@ show_sampling(test_dset, model, ax=ax[6:9])
 # </div>
 
 # %% [markdown] tags=["solution"]
-# <div class="alert alert-warning"><h4><b>Bonus Answer 2.</b></h4>
+# **Answer**
 #
 # Measuring the variance in each pixel would give a spatial map of the model's confidence across the images, with low variance indicating high confidence.
 #
-# </div>

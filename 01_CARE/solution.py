@@ -394,7 +394,7 @@ def _flip_and_rotate(
 def augment_batch(
     patch: np.ndarray,
     target: np.ndarray,
-    seed: int = 42,
+    seed: int | None = None,
 ) -> Tuple[np.ndarray, ...]:
     """
     Apply augmentation function to patches and masks.
@@ -415,7 +415,10 @@ def augment_batch(
     Tuple[np.ndarray, ...]
         Tuple of augmented arrays.
     """
-    rng = np.random.default_rng(seed=seed)
+    if seed is not None:
+        rng = np.random.default_rng(seed=seed)
+    else:
+        rng = np.random.default_rng()
     rotate_state = rng.integers(0, 4)
     flip_state = rng.integers(0, 2)
     return (
@@ -512,6 +515,10 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
         # these are the "members/attributes" of the CAREDataset
         self.image_data = image_data
         self.target_data = target_data
+        self.image_data_mean = self.image_data.mean()
+        self.image_data_std = self.image_data.std()
+        self.target_data_mean = self.target_data.mean()
+        self.target_data_std = self.target_data.std()
         self.patch_augment = apply_augmentations
 
     def __len__(self):
@@ -662,7 +669,7 @@ optimizer = torch.optim.Adam(
 # Follow these steps to launch Tensorboard to monitor your training run:
 
 # 1) Start training. Run the cell below to begin training the model and generating logs.
-# 2) Once training is started. Open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
+# 2) Once training is started, open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
 # 3) When prompted, select "Select another folder" and enter the path to the `01_CARE/runs/` directory.
 #
 # </div>
@@ -888,7 +895,7 @@ ax[1, 1].set_title("Prediction")
 ax[2, 0].imshow(test_images_array[2].squeeze(), cmap="magma")
 ax[2, 0].set_title("Test image")
 ax[2, 1].imshow(predictions[2][0].squeeze(), cmap="magma")
-ax[1, 1].set_title("Prediction")
+ax[2, 1].set_title("Prediction")
 plt.tight_layout()
 
 # %% [markdown] tags=[]
