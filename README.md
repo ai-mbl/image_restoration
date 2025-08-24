@@ -51,3 +51,8 @@ An example of splitting is shown below.
 
 <img src="./04_MicroSplit/imgs/Fig1_b.png">
 
+## Bonus exercise
+If you've finished these exercises, have a look at [5. Noise2Noise](05_bonus_Noise2Noise).
+This is a denoiser that is similar to CARE, except instead of noisy inputs and clean targets it uses both noisy inputs and noisy targets, i.e. two images with the same underlying signal but different realisations of noise.
+Because the random noise content of an image is on average zero, a network trained with noisy targets will converge to the same optima as a network trained with clean targets.
+

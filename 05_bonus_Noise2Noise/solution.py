@@ -4,24 +4,24 @@
 # # Noise2Noise
 #
 # CARE networks like the one you trained in the first image restoration exercise require that you acquire pairs
-# of high and low SNR. However, this often extremely challenging or, even, not possible. One such case is when it is simply
+# of high and low signal-to-noise ratio images. However, this often extremely challenging or, even, not possible. One such case is when it is simply
 # not possible to acquire high SNR images as the sample is too much susceptible to illumination.
 #
 # What to do when you are stuck with just noisy images? We have already seen Noise2Void, which
 # is a self-supervised method that can be trained on noisy images. But there are other 
 # supervised approaches that can be trained on noisy images only, such as Noise2Noise. 
+# Noise2Noise (N2N) is very similar to CARE, except instead of using noisy inputs and clean targets, N2N uses noisy inputs and noisy targets.
+# This paired data would be aquired by taking two images of your sample in quick succession.
 #
-# Noise2Noise relies on 2 key assumptions: 
-# 1. as Noise2Void: **the noise must be pixel-independent**.
-# 2. the noisy images used for training must be paired, with each pair containing very similar images (e.g., different acquisitions of the same FOV).
+# Noise2Noise relies on 2 assumptions: 
+# 1. The noise in one image is statistically independent of the noise in any other image.
+# That is, knowing the value of the random noise in one image tells you nothing about the random noise in another other image.
+# 2. The noise is on average zero. Meaning that, while noise can randomly increase or decrease the intensity of a pixel, the average change will be zero.
 #
-# By forcing the network to guess a noisy image from another one, the network learn to predict a corresponding denoised image. 
-# Why? Because as the noise is assumed to be pixel-independent, the network is not able to predict/reproduce it,
-# and hence the best it can do is to predict/reproduce the underlying signal. 
-# Once more, this only works if the two noisy images are very similar, as we want the underlying signal to be the same.
-#
-# To acquire data for Noise2Noise, one can simply image the same region of interest twice!
-# Indeed, in many microscopy modalities the noise can be assumed to be more or less pixel-independent (shot + readout noise).
+# These assumptions are widely met by imaging noise.
+# Therefore, if we train a neural network to predict one noisy image from another using the mean squared error loss function, the network will learn to predict a denoised image.
+# Theoretically, we can achieve the exact same result as CARE without any clean images!
+# However, in practice, N2N will require more training data than CARE to make up for the noisier training signal.
 #
 # In this notebook, we will again use the [Careamics](https://careamics.github.io) library.
 #

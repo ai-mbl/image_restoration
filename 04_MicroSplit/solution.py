@@ -128,14 +128,14 @@ ROOT_DIR = Path("/mnt/efs/aimbl_2025/data/05_image_restoration/MicroSplit_MBL_20
 #
 # Observe that:
 # - The more structures to unmix you pick, the more challenging the task becomes. A 2-structures unmixing is for sure easier than 3 or 4-structures unmixing.
-# - The lower the SNR of the data you will choose to train <nobr>Micro$\mathbb{S}$plit</nobr> with, the more challenging the task become and the more important will the unsupervised denoising feature of <nobr>Micro$\mathbb{S}$plit</nobr> become.
+# - The lower the SNR of the data you will choose to train $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ with, the more challenging the task become and the more important will the unsupervised denoising feature of $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ become.
 #
 # You can play with these parameters and check MicroSplit performance with different combinations.
 # </div>
 
 # %% tags=["task"]
 # pick structures and exposure time
-STRUCTURES = ... # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
+STRUCTURES = [...] # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
 EXPOSURE_TIME = ... # in ms, choose among 2, 20, 500 (expressed in ms)
 
 assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
@@ -148,9 +148,11 @@ STRUCTURES = ["Nuclei", "Microtubules"] # choose among "Nuclei", "Microtubules",
 EXPOSURE_TIME = 500 # in ms, choose among 2, 20, 500 (expressed in ms)
 
 assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
+assert isinstance(STRUCTURES, list), "Pass structures as a list"
 assert all([
     s in ["Nuclei", "Microtubules", "NucMembranes", "Centromeres"] for s in STRUCTURES
 ]), "Invalid structure selected. Choose among 'Nuclei', 'Microtubules', 'NucMembranes', 'Centromeres'."
+assert len(STRUCTURES) > 1, "Choose at leaser two structures"
 
 # %% [markdown] tags=[]
 # The following cell creates data configuration for training, validation and test sets. Each configurarion defines a set of parameters related to data loading, dataset creation and data processing.
@@ -209,23 +211,26 @@ val_dloader = DataLoader(
 # - Can you tell in which part of the model the different patches shown below are used?
 # - What do the input patches show? Why are there multiple inputs?
 # - Why do we need targets? How do we use such targets? 
+
 # %% [markdown] tags=["solution"]
 # *Answers*
 # - First columns contain, respectively, the superimposed input patch, and the additional input patches for Lateral Contextualization (LC). The later columns show, instead, the target unmixed patches.
 # - Input patches represent the image obtained by superimposing (mixing) the signal coming from different labeled structures. The additional LC inputs are used to enhance the field of view and, hence, the semantic context processed by the network.
 # - For this task we need unmixing targets as we are doing Supervised Learning.
-#
 # </div>
 
 # %% tags=[]
 plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples=3, patch_size=64)
 
 # %% [markdown] tags=[]
-# <div class="alert alert-warning"><h4><b>Question 1.1.bis</b></h4>
+# <div class="alert alert-warning"><h4><b>Question 1.2.</b></h4>
 #
 # Below are 2 examples of superimposed labeled structures with the correspondent ground truths. 
 # 1. Which one you think it's harder to unmix? Why?
 # 2. What are, in your opinion, features of the input data that would make unmixing more difficult? 
+#
+# </div>
+
 # %% [markdown] tags=["solution"]
 # *Answers*
 # 1. (b), because it shows more morphologically similar structures. MicroSplit is a content-aware method, i.e., it extracts semantic information regarding morphology, shape, brightness, etc., from the input data. Since structurally similar signal share many semantic features, the unmixing task becomes more challenging.
@@ -356,11 +361,12 @@ model = VAEModule(algorithm_config=experiment_config)
 # %% [markdown] tags=[]
 # ## 1.3. Train MicroSplit model
 #
-# In this section we will train out MicroSplit model using `lightning`.
+# In this section we will train out MicroSplit model using `lightning`. We have manually set the time limit to 20 minutes. This limit can be modified with the `max_time` argument.
 
 # %% tags=[]
 # create the Trainer
 trainer = Trainer(
+    max_time="00:00:20:00",
     max_epochs=training_config.num_epochs,
     accelerator="gpu",
     enable_progress_bar=True,
@@ -409,6 +415,13 @@ trainer.fit(
 # Do you remember what are the limitations of evaluating a model's perfomance on the validation set, instead?
 #
 # </div>
+
+# %% [markdown] tags=["solution"]
+# **Answer**
+# 
+# The validation set can be used to: control the learning rate, decide when to stop training and tune the hyperparameters.
+# Therefore, even though we did not adjust the model's parameters to minimize validation loss, the model is still technically fit to the validation data.
+# To properly test generalisation ability, we need to evaluate on data that was not used at all during training, and that data would be our test set.
 
 # %% [markdown] tags=[]
 # Before proceeding with the evaluation, let's focus once more on how MicroSplit works.
@@ -464,7 +477,7 @@ full_frame_evaluation(stitched_predictions[frame_idx], tar[frame_idx], inp[frame
 #
 # So far, you have trained MicroSplit and had a first qualitative evaluation on the validation set. However, at this point of the course you should be familiar with the idea that a proper evaluation should be carried out on a held-out test set, which has not been seen by the model during any part of the training process. In this section we perform the evaluation on the test set, which will include a further qualitative inspection of predicted images and a quantitative evaluation using adequate metrics to measure models' performance
 #
-# Recall that for this task, on a standard GPU, we cannot feed the entire image to <nobr>Micro$\mathbb{S}$plit</nobr>. Hence, we process smaller chunks of the full image that we so far called **patches**. Usually, at training time these patches are obtained as random crops from the full input images, as random cropping works as a kind of ***data augmentation*** technique. However, at test time we want our predictions to be done on the full images. Hence, we need a more "organized" strategy to obtain the patches. An option is to divide the full frames into an ordered grid of patches. In our paper, we call this process ***tiling*** and we call the single crops ***tiles***, to differentiate them from the ones we use for training.
+# Recall that for this task, on a standard GPU, we cannot feed the entire image to $\mathrm{Micro}\mathbb{S}\mathrm{plit}$. Hence, we process smaller chunks of the full image that we so far called **patches**. Usually, at training time these patches are obtained as random crops from the full input images, as random cropping works as a kind of ***data augmentation*** technique. However, at test time we want our predictions to be done on the full images. Hence, we need a more "organized" strategy to obtain the patches. An option is to divide the full frames into an ordered grid of patches. In our paper, we call this process ***tiling*** and we call the single crops ***tiles***, to differentiate them from the ones we use for training.
 #
 # A recurrent issue in ***tiled prediction*** is the possible presence of the so-called ***tiling artefacts***, which originate from inconsistencies and mismatches at the borders of neighboring tiles (see (c) - No padding in the figure below). This problem can be alleviated by performing ***padding*** of the input tile, and later discarding the padded area when stitching the predictions. The idea here is to introduce some overlap between neighboring tiles to have a smoother transition between them. Common padding strategies are:
 # - ***Outer padding***: the patch (tile) size used for training (e.g., `(64, 64)`) is padded to a larger size. Then, the padded are is discarded during stitching.
@@ -488,11 +501,12 @@ full_frame_evaluation(stitched_predictions[frame_idx], tar[frame_idx], inp[frame
 #
 # ***Note***: unfortunately we cannot provide pre-trained models for all the possible combinations of structures and exposures (if you're curious, there would be 33 combinations of such parameters 😌). Therefore, we provide one pre-trained model for each exposure time with 3 labeled structures to unmix (specifically, microtubules, nuclear membranes and centrosomes).
 #
-# Run the appropriate cells according to which checkpoint you want to use. If you want to stick with your current trained model, then simply skip this section.
+# So, run the cells in **Option A** to evaluate the model that you trained, or run the cells in **Option B** to evaluate a model that is pretrained.
 #
 # </div>
 
 # %% [markdown] tags=[]
+# ---
 # #### **Option A**: load your previous checkpoints
 #
 # In the same subdirectory of the current `exercise.ipynb` notebook, you should see a `checkpoints` folder. This contains the checkpoints of your past training run.
@@ -506,6 +520,11 @@ selected_ckpt = load_checkpoint_path("./checkpoints", best=True)
 print("✅ Selected model checkpoint:", selected_ckpt)
 
 # %% [markdown] tags=[]
+# #### End of **Option A**
+# ---
+
+# %% [markdown] tags=[]
+# ---
 # #### **Option B**: load pre-trained checkpoints
 #
 # As we mentioned above, we only have a few pre-trained checkpoints available. For this reason, we will need to reinstantiate configs, datasets, and model to make sure they coincide with one of the pre-trained models.
@@ -610,6 +629,10 @@ model = VAEModule(algorithm_config=experiment_config)
 
 # %% tags=[]
 load_pretrained_model(model, selected_ckpt)
+
+# %% [markdown] tags=[]
+# #### End of **Option B**
+# ---
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info"><h4><b>Task 2.1.2: Get test set predictions</b></h4>
@@ -877,8 +900,16 @@ print("Here the crop you selected:")
 
 # %% [markdown] tags=["solution"]
 # *Answers*
-# Receptive field of CNN, Intensity mismatch due to different sampling, ...
-#
+# 
+# The receptive field of the CNN is limited, so predictions have to be over a tiled image.
+# CNNs require inputs to be padded at the sides to allow same-size convolutions.
+# This padding can lead to edge artifacts on each tile.
+# Stiching tiles back together will leave edge artifacts at the borders of tiles.
+# 
+# A VAE restores an image using random sampling in the latent space, leading to random restorations.
+# Each tile is therefore restored differently and won't match when stitched back together.
+# This can however be overcome by averaging many different restorations, cancelling out the randomness.
+# 
 # </div>
 
 # %% [markdown] tags=[]
@@ -964,15 +995,14 @@ show_sampling(test_dset, model, ax=ax[3:6])
 show_sampling(test_dset, model, ax=ax[6:9])
 
 # %% [markdown] tags=[]
-# <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
+# <div class="alert alert-warning"><h4><b>Bonus Question 2.</b></h4>
 #
-# In your opinion, for a given input, which one is a better indicator of a successfull training?
-# 1. Get similar and consistent samples.
-# 2. Get diverse and varying samples.
-# Why?
-#
-# *Answer*
-#
-# Varying samples indicate high uncertainty in the model's predictions.
+# How do you think we could measure the model's confidence using these samples?
 #
 # </div>
+
+# %% [markdown] tags=["solution"]
+# **Answer**
+#
+# Measuring the variance in each pixel would give a spatial map of the model's confidence across the images, with low variance indicating high confidence.
+#

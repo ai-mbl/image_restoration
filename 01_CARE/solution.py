@@ -290,7 +290,7 @@ plt.tight_layout()
 #
 # </div>
 
-# %% [markdown] tags=["solution"]
+# %% [markdown] tags=[]
 # Normalization brings the data's values into a standardized range, making the default weight initialization appropriate and magnitude of gradients suitable for the default learning rate. 
 # The target noise-free images have a much higher intensity than the noisy input images.
 # They need to be normalized using their own statistics to bring them into the same range.
@@ -394,7 +394,7 @@ def _flip_and_rotate(
 def augment_batch(
     patch: np.ndarray,
     target: np.ndarray,
-    seed: int = 42,
+    seed: int | None = None,
 ) -> Tuple[np.ndarray, ...]:
     """
     Apply augmentation function to patches and masks.
@@ -415,7 +415,10 @@ def augment_batch(
     Tuple[np.ndarray, ...]
         Tuple of augmented arrays.
     """
-    rng = np.random.default_rng(seed=seed)
+    if seed is not None:
+        rng = np.random.default_rng(seed=seed)
+    else:
+        rng = np.random.default_rng()
     rotate_state = rng.integers(0, 4)
     flip_state = rng.integers(0, 2)
     return (
@@ -512,6 +515,10 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
         # these are the "members/attributes" of the CAREDataset
         self.image_data = image_data
         self.target_data = target_data
+        self.image_data_mean = self.image_data.mean()
+        self.image_data_std = self.image_data.std()
+        self.target_data_mean = self.target_data.mean()
+        self.target_data_std = self.target_data.std()
         self.patch_augment = apply_augmentations
 
     def __len__(self):
@@ -662,7 +669,7 @@ optimizer = torch.optim.Adam(
 # Follow these steps to launch Tensorboard to monitor your training run:
 
 # 1) Start training. Run the cell below to begin training the model and generating logs.
-# 2) Once training is started. Open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
+# 2) Once training is started, open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
 # 3) When prompted, select "Select another folder" and enter the path to the `01_CARE/runs/` directory.
 #
 # </div>
@@ -888,6 +895,7 @@ ax[1, 1].set_title("Prediction")
 ax[2, 0].imshow(test_images_array[2].squeeze(), cmap="magma")
 ax[2, 0].set_title("Test image")
 ax[2, 1].imshow(predictions[2][0].squeeze(), cmap="magma")
+ax[2, 1].set_title("Prediction")
 plt.tight_layout()
 
 # %% [markdown] tags=[]
@@ -914,16 +922,23 @@ plt.tight_layout()
 # But there's a catch.
 # It relies on the assumption that the noise is unstructured.
 # Unstructured noise is uncorrelated over pixels, so has no streaky or line artifacts.
+# An example is shown below.
+#
+# <img src="./../02_Noise2Void/imgs/unstructured noise.png">
 #
 # [03_COSDD](../03_COSDD/exercise.ipynb) is also a denoiser trained using unpaired noisy images, but it can handle a specific form of structure.
 # That structure is row correlation.
-# Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy.
+# Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy, an example is shown below.
 # It can also be found when using sCMOS sensors.
 # The practical trade-off with N2V is that COSDD takes much longer to train.
+#
+# <img src="./../03_COSDD/resources/structured noise.png">
 #
 # [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
 # It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into multiple ones (up to 4 in our work).
 # Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
-#
+# An example of splitting is shown below.
+# 
+# <img src="./../04_MicroSplit/imgs/Fig1_b.png">
 #
 # </div>
