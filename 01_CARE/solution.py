@@ -156,12 +156,8 @@ def create_patches(
     number of random patches.
 
     Important: the images should have an extra dimension before the spatial dimensions,
-    i.e., they are expected to be of shape (N, C, H, W) for 2D images or (N, C, D, H, W)
-    for 3D images, where N is the number of samples and C is the number of channels, with
-    C=1 for grayscale images.
-    
-    If you try it with only 2D or 3D images, don't forget to add an extra dimension
-    using `image = image[np.newaxis, ...]` or `image = image[None, ...]`.
+    i.e., they are expected to be of shape (N, H, W) for 2D images or (N, D, H, W)
+    for 3D images, where N is the number of samples.
     """
     # random generator
     rng = np.random.default_rng()

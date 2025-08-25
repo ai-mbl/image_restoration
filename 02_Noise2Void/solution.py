@@ -318,6 +318,13 @@ fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 ax[0].imshow(train_image[y_start:y_end, x_start:x_end], cmap="gray")
 ax[1].imshow(preds.squeeze()[y_start:y_end, x_start:x_end], cmap="gray")
 
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3><b>Answer: Inspect the image closely</b></h3>
+#
+# You should see some artefacts and some peculiar textures in the denoised image. This is likely due to the fact that the noise in the image is not entirely pixel-independent, violating one of the key assumptions of Noise2Void. As a result, the network may have learned to reproduce some of the noise patterns present in the training data, leading to these artefacts in the denoised image.
+#
+# </div>
+
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-warning"><h3><b>Question: Check the residuals</b></h3>
 #
@@ -329,7 +336,7 @@ ax[1].imshow(preds.squeeze()[y_start:y_end, x_start:x_end], cmap="gray")
 residuals = preds.squeeze() - train_image
 plt.imshow(residuals, cmap="gray")
 
-# %% [markdown] tags=[]
+# %% [markdown] tags=["solution"]
 # <div class="alert alert-block alert-warning"><h3><b>Answer: Check the residuals</b></h3>
 #
 # Ideally N2V should remove only the noise, so the residuals should look like pure noise.
