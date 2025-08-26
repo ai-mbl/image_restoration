@@ -373,7 +373,7 @@ hub = Hub(
 #
 # Open Tensorboard to monitor training. (See Task 3 of 01_CARE).
 # Choose `03_COSDD/checkpoints` for the folder.
-# In there you'll see the training logs of a model that was trained for about 4 hours.
+# In there you'll see the training logs of a model that was trained for about 1.75 hours.
 #
 # Unlike CARE, this model has more than one loss curve.
 # The cell below describes how to interpret each one.
@@ -518,7 +518,7 @@ predict_loader = torch.utils.data.DataLoader(
 #
 # Our model was only trained for 15 minutes. This is long enough to get some denoising results, but a model trained for longer would do a lot better. In the cell below, load the trained model by recalling the value you gave for `model_name`. Then procede through the notebook to look at how well it performs. 
 #
-# Once you reach the end of the notebook, return to this cell to load a model that has been trained for 3.5 hours by uncommenting line 3, then run the notebook again to see how much difference the extra training time makes. 
+# Once you reach the end of the notebook, return to this cell to load a model that has been trained for 1.75 hours by uncommenting line 3, then run the notebook again to see how much difference the extra training time makes. 
 # </div>
 
 # %% tags=["task"]
@@ -690,7 +690,7 @@ display(layout)
 #
 # ### Task 8.4.
 #
-# If you haven't already, return to Task 7.1, uncomment line three and look at the results from a denoiser that was trained for 2 hours.
+# If you haven't already, return to Task 7.1, uncomment line three and look at the results from a denoiser that was trained for 1.75 hours.
 # </div>
 
 # %% [markdown] tags=[]
