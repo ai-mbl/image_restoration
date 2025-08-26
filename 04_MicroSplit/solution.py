@@ -15,25 +15,39 @@
 #
 # In more detail, MicroSplit performs the task of ***joint splitting and unsupervised denoising*** in fluorescence microscopy.
 #
-# From a technical perspective, given a noisy image with superimposed labeled structures $X$ (e.g., multiple fluorescently labeled structures imaged in the same channel), the goal is to predict multiple, *unmixed*, *denoised* images $C_1$, ..., $C_k$, each one corresponding to one of the $k$ different structures. Mathematically: $X = C_1 + C_2 + \dots + C_k + n$, where $n$ is the noise in $X$. 
+# From a technical perspective, given a noisy image with superimposed labeled structures $X$ (e.g., multiple fluorescently labeled structures imaged in the same channel), the goal is to predict multiple, **unmixed and denoised** images $C_1$, ..., $C_k$, each one corresponding to one of the $k$ different structures. Mathematically: $X = C_1 + C_2 + \dots + C_k + n$, where $n$ is the noise in $X$. 
 #
 # MicroSplit is trained with 2 main objectives (losses):
 # - ***Supervised unmixing*** using target (noisy) unmixed images of the labeled structures.
 # - ***Unsupervised denoising*** using a *Noise Model loss*. 
 #
-# MicroSplit's architecture is a slightly modified version of a Ladder Variational Auto-Encoder (LVAE).
-# A distinctive feature of the model is the use of an additional trick called Lateral Contextualization (LC). It consists in having additional inputs in the Encoder part which include larger field-of-views (FOVs) of the main superimposed input. This enables the Neural Network to receive more long-range content than the one of a single input patch, hence allowing the extraction of global features which has shown to increase accuracy and consistency of unmixed predictions. 
+# MicroSplit's architecture is a slightly modified Variational Auto-Encoder (VAE).
+# Specifically, it implements multiple latent spaces in a hierarchical manner. 
+# For this reason the architecture is called Ladder VAE (LVAE).
+# A distinctive feature of the model is the use of an additional trick called Lateral Contextualization (LC). 
+# It consists in having additional inputs in the Encoder part which include larger field-of-views (FOVs) of the main superimposed input. 
+# This enables the Neural Network to receive more long-range content than the one of a single input patch, hence allowing the extraction
+# of global features which has shown to increase accuracy and consistency of unmixed predictions. 
 #
 # <p>
 #     <img src="imgs/Fig2.png" width="800" />
 # </p>
 #
-# ***NOTE***: you are now probably wondering how we get a larger FOV is the input is a full microscopy image. Well... the reality is that in microscopy images are usually pretty large and GPUs are *always* too small (🥲). Therefore, we usually work on image **patches** obtained by cropping parts of the image. In this context, LC inputs are simply crops centered on the original one including a larger area of the image.
+# ***NOTE***: you are now probably wondering how we get a larger FOVs for LC if the input is a full microscopy image. 
+# Well... the reality is that in microscopy images are usually pretty large and GPUs are *always* too small (🥲). 
+# Therefore, we usually work on image **patches** obtained by cropping parts of the image. 
+# In this context, LC inputs are simply crops centered on the original one including a larger area of the image.
 
 # %% [markdown] tags=[]
+# ***References:***
+# - VAE paper: [Kingma et al., Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114)
+# - LVAE paper: [Sønderby et al, Ladder Variational Autoencoders](https://arxiv.org/abs/1602.02282)
+# - MicroSplit paper: [Ashesh et al., Micro𝕊plit: Semantic Unmixing of Fluorescent Microscopy Data](https://www.biorxiv.org/content/10.1101/2025.02.10.637323v1)
+
 # ***Additional resources:***
 # - For more information about LC, please check this paper where we first introduced the idea: [μSplit: efficient image decomposition for microscopy data](https://openaccess.thecvf.com/content/ICCV2023/papers/Ashesh_uSplit_Image_Decomposition_for_Fluorescence_Microscopy_ICCV_2023_paper.pdf), which enabled the network to understand the global spatial context around the input patch.
-# - To understand in detail how the joint denoising is performed please check this other work: [denoiSplit: a method for joint microscopy image splitting and unsupervised denoising](https://eccv.ecva.net/virtual/2024/poster/2538). 
+# - To understand in detail how the joint denoising is performed please check this other work: [denoiSplit: a method for joint microscopy image splitting and unsupervised denoising](https://eccv.ecva.net/virtual/2024/poster/2538).
+# P.S. Web is full of videos and blogposts explaining VAEs and LVAEs... just google it!
 
 # %% [markdown] tags=[]
 # <div class="alert alert-danger">
@@ -105,19 +119,23 @@ ROOT_DIR = Path("/mnt/efs/aimbl_2025/data/05_image_restoration/MicroSplit_MBL_20
 # ## 1.1. Data Preparation
 
 # %% [markdown] tags=[]
-# Since the channel unmixing capabilities of MicroSplit are trained in a supervised way, we must feed *(i)* input images that contain the superimposed structures, and *(ii)* target images/channels, each one showing one label structure separately. 
+# Since MicroSplit is trained in a supervised manner, we must feed:
+# *(i)* input images containing the superimposed structures, and 
+# *(ii)* target images/channels, each one showing one label structure separately. 
 #
-# Notice that, for simplicity, the mixed input image is here obtained synthetically by overlapping (pixel-wise sum) the other two channels.
+# Notice that, for simplicity, the mixed input image is here obtained synthetically by overlapping the other two channels (pixel-wise sum).
 #
-# In this exercise, we will use a dataset imaged at the National Facility for Light Imaging at Human Technopole.
+# In this exercise, we will use a dataset imaged at the *National Facility for Light Imaging at Human Technopole*.
 #
 # This dataset contains four labeled structures: 
-# 1. Cell Nucleui,
+# 1. Cell Nuclei,
 # 1. Microtubules,
 # 1. Nuclear Membrane,
 # 1. Centromeres/Kinetocores.
 #
-# Additionally, this dataset offers acquisitions taken with different exposure times `(2, 20, 500 ms)`. Hence, the data is available at various [signal-to-noise ratios](https://en.wikipedia.org/wiki/Signal-to-noise_ratio#:~:text=Signal%2Dto%2Dnoise%20ratio%20(,power%2C%20often%20expressed%20in%20decibels.)) (SNR). Shorter exposure times entails the collection of fewer photons, leading to higher *Poisson shot noise* and, therefore, a lower SNR.
+# Additionally, this dataset offers acquisitions taken with different exposure times `(2, 20, 500 ms)`. 
+# Hence, the data is available at various [signal-to-noise ratios](https://en.wikipedia.org/wiki/Signal-to-noise_ratio#:~:text=Signal%2Dto%2Dnoise%20ratio%20(,power%2C%20often%20expressed%20in%20decibels.)) (SNR). 
+# Shorter exposure times only allows the collection of fewer photons, leading to higher *Poisson shot noise* and, therefore, a lower SNR.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-info"><h4><b>Task 1.1.</b></h4>
@@ -127,15 +145,15 @@ ROOT_DIR = Path("/mnt/efs/aimbl_2025/data/05_image_restoration/MicroSplit_MBL_20
 # 2. The exposure time (and, thus, the SNR) of the input superimposed images.
 #
 # Observe that:
-# - The more structures to unmix you pick, the more challenging the task becomes. A 2-structures unmixing is for sure easier than 3 or 4-structures unmixing.
-# - The lower the SNR of the data you will choose to train $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ with, the more challenging the task become and the more important will the unsupervised denoising feature of $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ become.
+# - The more structures to unmix you pick, the more challenging the task becomes. A 2-structures unmixing is always easier than 3 or 4-structures unmixing.
+# - The lower the SNR of the data you will choose to train $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ with, the more challenging the task becomes and the more important will the unsupervised denoising feature of $\mathrm{Micro}\mathbb{S}\mathrm{plit}$ becomes.
 #
 # You can play with these parameters and check MicroSplit performance with different combinations.
 # </div>
 
 # %% tags=["task"]
 # pick structures and exposure time
-STRUCTURES = [...] # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
+STRUCTURES = [..., ...] # choose among "Nuclei", "Microtubules", "NucMembranes", "Centromeres"
 EXPOSURE_TIME = ... # in ms, choose among 2, 20, 500 (expressed in ms)
 
 assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500] ms"
@@ -175,6 +193,7 @@ datapath = ROOT_DIR / f"data/{EXPOSURE_TIME}ms"
 load_data_func = partial(get_train_val_data, structures=STRUCTURES)
 
 # %% tags=[]
+# NOTE: here we are loading data from disk, creating synthetic inputs, generating patches... this might take a while
 train_dset, val_dset, test_dset, data_stats = create_train_val_datasets(
     datapath=datapath,
     train_config=train_data_config,
@@ -205,10 +224,13 @@ val_dloader = DataLoader(
 #
 # ***Tip:*** the following functions shows a few samples of the prepared training data. In case you don't like what you see (empty or noisy patches), execute the cell again. Different randomly chosen patches will be shown!</div>
 
+# %% tags=[]
+plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples=3, patch_size=64)
+
 # %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Question 1.1.</b></h4>
 #
-# - Can you tell in which part of the model the different patches shown below are used?
+# - Can you tell in which parts of the model the different patches shown below are used?
 # - What do the input patches show? Why are there multiple inputs?
 # - Why do we need targets? How do we use such targets? 
 
@@ -218,9 +240,6 @@ val_dloader = DataLoader(
 # - Input patches represent the image obtained by superimposing (mixing) the signal coming from different labeled structures. The additional LC inputs are used to enhance the field of view and, hence, the semantic context processed by the network.
 # - For this task we need unmixing targets as we are doing Supervised Learning.
 # </div>
-
-# %% tags=[]
-plot_input_patches(dataset=train_dset, num_channels=len(STRUCTURES), num_samples=3, patch_size=64)
 
 # %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Question 1.2.</b></h4>
@@ -366,7 +385,7 @@ model = VAEModule(algorithm_config=experiment_config)
 # %% tags=[]
 # create the Trainer
 trainer = Trainer(
-    max_time="00:00:20:00",
+    max_time="00:00:25:00", # this is roughly the time to train for 3 epochs 
     max_epochs=training_config.num_epochs,
     accelerator="gpu",
     enable_progress_bar=True,
@@ -386,14 +405,19 @@ trainer.fit(
 )
 
 # %% [markdown] tags=[]
-# **NOTE**: the first epoch of training should take approximately 12-15 minutes on the GPU, whereas the subsequent epochs should take around 5-6 minutes each.
-# For the sake of time you can stop training after the 2nd epoch... Results will not be as good, but you will still be able to evaluate the model and see how it works.
+# **NOTE**: each training epoch should take approximately 7 minutes on our GPUs.
+# For the sake of time you can stop training after the 2nd or 3rd epoch... 
+# Results will not be as good, but you will still be able to evaluate the model and see how it works.
+# For reference, in our experiments we usually train MicroSplit for 50 or 100 epochs on similarly sized datasets,
+# which takes approximately between 6 and 12 hours on a single GPU.
 
 # %% [markdown] tags=[]
-# <div class="alert alert-block alert-info"><h5><b>Task 1.3: Visualize losses and metrics using *Tensorboard*</b></h5>
+# <div class="alert alert-block alert-info"><h5><b>Task 1.3: Visualize losses and metrics using Tensorboard</b></h5>
 #
 # Open Tensorboard in VS Code to monitor training.
-# Follow these steps to launch Tensorboard.
+
+# You already did it for the 01_CARE exercise so you should know how to do it!
+# However, in case you need a reminder, here are the steps to follow:
 #
 # 1) Open the extensions panel in VS Code.
 # 2) Search Tensorboard and install the extension published by Microsoft.
@@ -421,23 +445,31 @@ trainer.fit(
 # 
 # The validation set can be used to: control the learning rate, decide when to stop training and tune the hyperparameters.
 # Therefore, even though we did not adjust the model's parameters to minimize validation loss, the model is still technically fit to the validation data.
+# Why? Because we usually use validation loss and metrics to make decisions about the model (e.g., hyperparameter tuning, when to stop training, etc.).
+# So our model would be biased towards performing well on the validation set.
 # To properly test generalisation ability, we need to evaluate on data that was not used at all during training, and that data would be our test set.
 
 # %% [markdown] tags=[]
 # Before proceeding with the evaluation, let's focus once more on how MicroSplit works.
 #
-# As we mentioned, MicroSplit uses a modified version of the Ladder Variational Autoencoder (LVAE) similarly to COSDD and other models you encountered during the course. This architecture, given an input patch, enables the generation of multiple outputs. Technically, this happens by sampling multiple different *latent vectors* in the latent space. In mathematical terms we say that "*MicroSplit is learning a full posterior of possible solutions*".
+# As we mentioned, MicroSplit uses a modified version of the Ladder Variational Autoencoder (LVAE) similarly to DivNoising, HDN, COSDD and other models you encountered during the course. 
+# This architecture, given an input patch, enables the generation of multiple outputs. Technically, this happens by sampling multiple different *latent vectors* in the latent space. 
+# In mathematical terms we say that "*MicroSplit is learning a full posterior of possible solutions*".
 #
-# This is a cool feature that makes our variational models pretty powerful and handy!!! Indeed, averaging multiple samples (predictions) generally allows to get smoother, more consistent predictions (in other terms, it somehow averages out potential "hallucinations" of the network). Moreover, by computing the pixel-wise standard deviation over multiple samples (predictions) we can obtain a preliminary estimate of the (data) uncertainty in the model's predictions.
+# This is a cool feature that makes our variational models pretty powerful and handy!!!
+# Indeed, averaging multiple samples (predictions) generally allows to get smoother, more consistent predictions (in other terms, it somehow averages out potential "hallucinations" of the network). 
+# Moreover, by computing the pixel-wise standard deviation over multiple samples (predictions) we can obtain a preliminary estimate of the (data) uncertainty in the model's predictions.
 #
-# In this framework, the parameter `mmse_count : (int)` determines the number of samples (predictions) generated for any given input patch. A larger value allows to get smoother predictions, also limiting recurring issues such as *tiling artefacts*. However, it obviously increases the time and cost of the computation. Generally, a value of `> 5` is enough to get decently smooth predicted frames. For reference, in our papers we often use values of 50 to get the best results. 
+# In this framework, the parameter `mmse_count : (int)` determines the number of samples (predictions) generated for any given input patch. 
+# A larger value allows to get smoother predictions, also limiting recurring issues such as *tiling artefacts*. However, it obviously increases the time and cost of the computation. 
+# Generally, a value of `> 5` is enough to get decently smooth predicted frames. For reference, in our papers we often use values of 50 to get the best results. 
 
 # %% tags=["task"]
 MMSE_COUNT = ...
 """The number of MMSE samples to use for the splitting predictions."""
 
 # %% tags=["solution"]
-MMSE_COUNT = 2
+MMSE_COUNT = 5
 """The number of MMSE samples to use for the splitting predictions."""
 
 # %% tags=[]
@@ -475,11 +507,21 @@ full_frame_evaluation(stitched_predictions[frame_idx], tar[frame_idx], inp[frame
 # %% [markdown] tags=[]
 # # **Exercise 2**: Evaluating MicroSplit performance
 #
-# So far, you have trained MicroSplit and had a first qualitative evaluation on the validation set. However, at this point of the course you should be familiar with the idea that a proper evaluation should be carried out on a held-out test set, which has not been seen by the model during any part of the training process. In this section we perform the evaluation on the test set, which will include a further qualitative inspection of predicted images and a quantitative evaluation using adequate metrics to measure models' performance
+# So far, you have trained MicroSplit and had a first qualitative evaluation on the validation set. 
+# However, at this point of the course you should be familiar with the idea that a proper evaluation should be carried out on a held-out test set,
+# which has not been seen by the model during any part of the training process. In this section we perform the evaluation on the test set, 
+# which will include a further qualitative inspection of predicted images and a quantitative evaluation using adequate metrics to measure models' performance
 #
-# Recall that for this task, on a standard GPU, we cannot feed the entire image to $\mathrm{Micro}\mathbb{S}\mathrm{plit}$. Hence, we process smaller chunks of the full image that we so far called **patches**. Usually, at training time these patches are obtained as random crops from the full input images, as random cropping works as a kind of ***data augmentation*** technique. However, at test time we want our predictions to be done on the full images. Hence, we need a more "organized" strategy to obtain the patches. An option is to divide the full frames into an ordered grid of patches. In our paper, we call this process ***tiling*** and we call the single crops ***tiles***, to differentiate them from the ones we use for training.
+# Recall that for this task, on a standard GPU, we cannot feed the entire image to $\mathrm{Micro}\mathbb{S}\mathrm{plit}$. 
+# Hence, we process smaller chunks of the full image that we so far called **patches**. 
+# Usually, at training time these patches are obtained as random crops from the full input images, as random cropping works
+# as a kind of ***data augmentation*** technique. However, at test time we want our predictions to be done on the full images.
+# Hence, we need a more "organized" strategy to obtain the patches. An option is to divide the full frames into an ordered grid of patches.
+# In our paper, we call this process ***tiling*** and we call the single crops ***tiles***, to differentiate them from the ones we use for training.
 #
-# A recurrent issue in ***tiled prediction*** is the possible presence of the so-called ***tiling artefacts***, which originate from inconsistencies and mismatches at the borders of neighboring tiles (see (c) - No padding in the figure below). This problem can be alleviated by performing ***padding*** of the input tile, and later discarding the padded area when stitching the predictions. The idea here is to introduce some overlap between neighboring tiles to have a smoother transition between them. Common padding strategies are:
+# A recurrent issue in ***tiled prediction*** is the possible presence of the so-called ***tiling artefacts***, which originate from inconsistencies and mismatches at the borders of neighboring tiles 
+# (see (c) - No padding in the figure below). This problem can be alleviated by performing ***padding*** of the input tile, and later discarding the padded area when stitching the predictions. 
+# The idea here is to introduce some overlap between neighboring tiles to have a smoother transition between them. Common padding strategies are:
 # - ***Outer padding***: the patch (tile) size used for training (e.g., `(64, 64)`) is padded to a larger size. Then, the padded are is discarded during stitching.
 # - ***Inner padding***: the patch (tile) size used for training (e.g., `(64, 64)`) is used as input for prediction. Then, only the inner part of it is kept during stitiching.
 #
@@ -550,7 +592,7 @@ assert EXPOSURE_TIME in [2, 20, 500], "Exposure time must be one of [2, 20, 500]
 
 # %% tags=[]
 pretrained_ckpt_path = ROOT_DIR / f"ckpts/{EXPOSURE_TIME}ms"
-selected_ckpt = load_checkpoint_path(pretrained_ckpt_path, best=True)
+selected_ckpt = load_checkpoint_path(str(pretrained_ckpt_path), best=True)
 print("✅ Selected model checkpoint:", selected_ckpt)
 
 # %% [markdown] tags=[]
@@ -639,8 +681,11 @@ load_pretrained_model(model, selected_ckpt)
 #
 # Here we reuse the `get_unnormalized_predictions` you saw before to get the unmixed predicted images for the training set.
 # You will have to:
-# - Set `MMSE_COUNT` parameter, being careful at finding an appropriate trade-off between prediction quality (remember the tiling artefacts we discussed above) and computation time. Given out time contraint, a reasonable range to try is `[2, 20]`.
-# - Set `INNER_TILE_SIZE` parameter, trying different values for inner padding. Also here notice that a smaller `INNER_TILE_SIZE` entails larger padding/overlap between neighboring patches and, hence, more predictions to be done. A reasonable range to try is `[16, 64]`, where `64` means that no padding is done (recall, we used a patch size of `64`).
+# - Set `MMSE_COUNT` parameter, being careful at finding an appropriate trade-off between prediction quality (remember the tiling artefacts we discussed above) and computation time.
+# Given our time contraints, a reasonable range to try is `[2, 10]`.
+# - Set `INNER_TILE_SIZE` parameter, trying different values for inner padding. 
+# Also here notice that a smaller `INNER_TILE_SIZE` entails larger padding/overlap between neighboring patches and, hence, more predictions to be done. 
+# A reasonable range to try is `[16, 64]`, where `64` means that no padding is done (recall, we used a patch size of `64` during training).
 # </div>
 
 # %% tags=["task"]
@@ -716,12 +761,6 @@ img_sz = ...
 # ---
 
 rand_locations = pick_random_patches_with_content(tar, img_sz)
-h_start = rand_locations[
-    2, 0
-]  # np.random.randint(stitched_predictions.shape[1] - img_sz)
-w_start = rand_locations[
-    2, 1
-]  # np.random.randint(stitched_predictions.shape[2] - img_sz)
 
 ncols = 1 + 2 * stitched_predictions.shape[-1]
 nrows = min(len(rand_locations), 5)
@@ -759,15 +798,10 @@ img_sz = 128
 # ---
 
 rand_locations = pick_random_patches_with_content(tar, img_sz)
-h_start = rand_locations[
-    2, 0
-]  # np.random.randint(stitched_predictions.shape[1] - img_sz)
-w_start = rand_locations[
-    2, 1
-]  # np.random.randint(stitched_predictions.shape[2] - img_sz)
 
 ncols = 1 + 2 * stitched_predictions.shape[-1]
 nrows = min(len(rand_locations), 5)
+nrows = max(nrows, 2)
 fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * 3, nrows * 3))
 
 for i, (h_start, w_start) in enumerate(rand_locations[:nrows]):
@@ -886,14 +920,16 @@ print("Here the crop you selected:")
 # %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Question 2.2.</b></h4>
 #
-# Can you propose any idea about how to get rid of the current issues in the predictions? Take into account the things we mentioned during the course so far...
+# Can you come up with any idea about how to get rid of the current issues in the predictions? 
+# Take into account the things we mentioned during the course so far...
 #
 # </div>
 
 # %% [markdown] tags=[]
 # <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
 #
-# In this and other exercises we spoke of "tiling artefacts". These are generally due to a mismatch in the predictions of adjacent tiles/patches. In the context of CNN and, specifically, VAE-based models, can you think about reasons why we have such effect?
+# In this and other exercises we spoke of "tiling artefacts". These are generally due to a mismatch in the predictions of adjacent tiles/patches. 
+# In the context of CNN and, specifically, VAE-based models, can you think about reasons why we have such effect?
 #
 # *Hint1*: for CNN, think about how convolution works at the image borders... <br>
 # *Hint2*: for VAE, reflect on the sampling happening in the latent space....
@@ -928,7 +964,7 @@ print("Here the crop you selected:")
 # </div>
 
 # %% tags=[]
-# Comment out the metrics you don
+# Comment out the metrics you don't want to use
 METRICS = [
     "PSNR",
     "Pearson",
@@ -974,7 +1010,7 @@ show_metrics(metrics_dict)
 # <hr style="height:2px;">
 
 # %% [markdown] tags=[]
-# ## BONUS: visualize different between samples
+# ## BONUS: visualize difference between samples
 #
 # Here we compute a pair of posterior samples, to see how they are different.
 
@@ -995,7 +1031,7 @@ show_sampling(test_dset, model, ax=ax[3:6])
 show_sampling(test_dset, model, ax=ax[6:9])
 
 # %% [markdown] tags=[]
-# <div class="alert alert-warning"><h4><b>Bonus Question 2.</b></h4>
+# <div class="alert alert-warning"><h4><b>Bonus Question</b></h4>
 #
 # How do you think we could measure the model's confidence using these samples?
 #
