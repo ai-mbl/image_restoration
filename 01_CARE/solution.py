@@ -102,6 +102,7 @@ assert len(image_files) == len(
 
 print(f"Total size of train dataset: {len(image_files)}")
 
+# %%
 # Split the train data into train and validation
 seed = 42
 train_files_percentage = 0.8
@@ -136,7 +137,7 @@ print(f"Number of test files: {len(test_image_files)}")
 # %% [markdown] tags=[]
 # ### Patching function
 #
-# In the majority of cases microscopy images are too large to be processed at once and need to be divided into smaller patches. We will define a function that takes image and target arrays and extracts random (paired) patches from them.
+# In the majority of cases microscopy images are too large to be processed at once and need to be divided into smaller patches. We will define a function that takes image and target arrays and extracts **random** (paired) patches from them.
 #
 # The method is a bit scary because accessing the whole patch coordinates requires some magical python expressions. 
 #
@@ -150,12 +151,13 @@ def create_patches(
     """
     Create random patches from an array and a target.
 
-    The method calculates how many patches the image can be divided into and then
-    extracts an equal number of random patches.
+    The method calculates how many non-overlapping patches the image can be divided into 
+    (i.e., if we were dividing the image in a grid of patches) and then extracts an equal
+    number of random patches.
 
-    Important: the images should have an extra dimension before the spatial dimensions.
-    if you try it with only 2D or 3D images, don't forget to add an extra dimension
-    using `image = image[np.newaxis, ...]`
+    Important: the images should have an extra dimension before the spatial dimensions,
+    i.e., they are expected to be of shape (N, H, W) for 2D images or (N, D, H, W)
+    for 3D images, where N is the number of samples.
     """
     # random generator
     rng = np.random.default_rng()
@@ -172,6 +174,7 @@ def create_patches(
         # iterate over the number of patches
         for _ in range(n_patches):
             # get random coordinates for the patch and create the crop coordinates
+            # NOTE: we sample here the top-left corner of the patch
             crop_coords = [
                 rng.integers(0, sample.shape[i] - patch_size[i], endpoint=True)
                 for i in range(len(patch_size))
@@ -220,7 +223,7 @@ def create_patches(
 # To train the network, we will use patches of size 128x128. We first need to load the data, stack it and then call our patching function.
 
 # %% tags=[]
-# Load images and stack them into arrays
+# Load images from files and stack them into arrays
 train_images_array = np.stack([tifffile.imread(str(f)) for f in train_image_files])
 train_targets_array = np.stack([tifffile.imread(str(f)) for f in train_target_files])
 val_images_array = np.stack([tifffile.imread(str(f)) for f in val_image_files])
@@ -255,6 +258,28 @@ assert (
 print(f"Train images patches shape: {train_images_patches.shape}")
 print(f"Validation images patches shape: {val_images_patches.shape}")
 
+
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-warning"><h3>Question: Patch size</h3>
+#
+# In the cell above we set a patch size and created random patches images.
+# What should we consider when choosing the patch size?
+#
+#
+# </div>
+
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3>Answer: Patch size</h3>
+#
+# For most practical applications, when choosing the patch size, we should consider the following factors:
+# - **Content**: The patch size should be large enough to capture the relevant context and features of the image (e.g., potentially we should be able to capture an entire object within it, like a cell or a nucleus for instance).
+# - **Receptive Field**: The patch size should be compatible with the receptive field of the neural network. If the patch size is smaller than the receptive field, the network may not be able to learn effectively.
+# - **Computational Resources**: Larger patches require more memory and computational power. We need to balance the patch size with the available resources.
+# - **Model Architecture**: Some models may have specific requirements or limitations regarding the input size. E.g., if we have multiple downsampling layers, the patch size should be divisible by a certain factor.
+#
+# </div>
+
+
 # %% [markdown] tags=[]
 # ### Visualize training patches
 
@@ -277,7 +302,7 @@ plt.tight_layout()
 # %% [markdown] tags=[]
 # ### Dataset class
 #
-# In modern deep learning libraries, the data is often wrapped into a class called a `Dataset`. Instances of that class are then used to extract the patches before feeding them to the network.
+# In modern deep learning libraries, the data is wrapped into a class called a `Dataset`. Instances of that class are then used to extract the patches before feeding them to the network.
 #
 # Here, the class will be wrapped around our pre-computed stacks of patches. Our `CAREDataset` class is built on top of the PyTorch `Dataset` class (we say it "inherits" from `Dataset`, the "parent" class). That means that it has some function hidden from us that are defined in the PyTorch repository, but that we also need to implement specific pre-defined methods, such as `__len__` and `__getitem__`. The advantage is that PyTorch knows what to do with a `Dataset` "child" class, since its behaviour is defined in the `Dataset` class, but we can do operations that are closely related to our own data in the method we implement.
 
@@ -290,10 +315,12 @@ plt.tight_layout()
 #
 # </div>
 
-# %% [markdown] tags=[]
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3>Answer: Normalization</h3>
 # Normalization brings the data's values into a standardized range, making the default weight initialization appropriate and magnitude of gradients suitable for the default learning rate. 
 # The target noise-free images have a much higher intensity than the noisy input images.
 # They need to be normalized using their own statistics to bring them into the same range.
+# </div>
 
 # %%
 # Calculate the mean and std of the train dataset
@@ -305,7 +332,7 @@ print(f"Train mean: {train_mean}, std: {train_std}")
 print(f"Target mean: {target_mean}, std: {target_std}")
 
 # %% [markdown] tags=[]
-# These functions will be used to normalize the data and perform data augmentation as it is loaded.
+# The following functions will be used to normalize the data and perform data augmentation as it is loaded.
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 1: Normalization</h3>
@@ -337,7 +364,7 @@ def normalize(
     np.ndarray
         Normalized array.
     """
-    return # YOUR CODE HERE
+    return ... # YOUR CODE HERE
 
 # %% tags=["solution"]
 def normalize(
@@ -448,8 +475,7 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
     def __init__(
         self, image_data: np.ndarray, target_data: np.ndarray, apply_augmentations: bool = False
     ):
-        """
-        Constructor.
+        """Constructor.
         
         Parameters
         ----------
@@ -460,9 +486,17 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
         apply_augmentations : bool, optional
             Whether to apply augmentations to the patches, by default False.
         """
-        # these are the "members/attributes" of the CAREDataset
+        # data
         self.image_data = image_data
         self.target_data = target_data
+        
+        # data statistics
+        self.image_data_mean = self.image_data.mean()
+        self.image_data_std = self.image_data.std()
+        self.target_data_mean = self.target_data.mean()
+        self.target_data_std = self.target_data.std()
+        
+        # whether to apply augmentations
         self.patch_augment = apply_augmentations
 
     def __len__(self):
@@ -470,24 +504,24 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
 
         This method is called when applying `len(...)` to an instance of our class
         """
-        return # YOUR CODE HERE --> define the total number of patches
+        return ... # YOUR CODE HERE --> define the total number of patches
 
     def __getitem__(self, index: int):
         """Return a single pair of patches."""
 
         # get input noisy patch
-        patch = # YOUR CODE HERE
+        patch = ... # YOUR CODE HERE
 
         # get target clean patch
-        target = # YOUR CODE HERE
+        target = ... # YOUR CODE HERE
 
         # Apply transforms
         if self.patch_augment:
-            patch, target = # YOUR CODE HERE
+            patch, target = ... # YOUR CODE HERE
 
         # Normalize the patch
-        patch = # YOUR CODE HERE
-        target = # YOUR CODE HERE
+        patch = ... # YOUR CODE HERE
+        target = ... # YOUR CODE HERE
 
         return (
             patch[np.newaxis].astype(np.float32),
@@ -512,13 +546,17 @@ class CAREDataset(Dataset): # CAREDataset inherits from the PyTorch Dataset clas
         apply_augmentations : bool, optional
             Whether to apply augmentations to the patches, by default False.
         """
-        # these are the "members/attributes" of the CAREDataset
+        # data
         self.image_data = image_data
         self.target_data = target_data
+        
+        # data statistics
         self.image_data_mean = self.image_data.mean()
         self.image_data_std = self.image_data.std()
         self.target_data_mean = self.target_data.mean()
         self.target_data_std = self.target_data.std()
+        
+        # whether to apply augmentations
         self.patch_augment = apply_augmentations
 
     def __len__(self):
@@ -608,7 +646,9 @@ val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 # %% [markdown] tags=[]
 # ## Part 2: Training the model
 #
-# Image restoration task is very similar to the segmentation task we have done in a previous exercise. We can use the same UNet model and just need to adapt a few things.
+# Image restoration task is very similar to the segmentation task we have done in a previous exercise. 
+# The main difference is that instead of predicting a mask, we want to predict a clean image from a noisy input image.
+# Therefore, we can use the same UNet model and just need to adapt a few things.
 #
 # %% [markdown] tags=[]
 # ![image](nb_data/carenet.png)
@@ -620,11 +660,12 @@ val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 # %% tags=[]
 # Load the model
 model = UNet(depth=2, in_channels=1, out_channels=1)
+# NOTE: 1 grayscale image in, 1 grayscale image out
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 3: Loss function</h3>
 #
-# CARE trains image to image (output vs. ground truth), therefore we need a different loss function compared to the segmentation task (image to mask). 
+# CARE trains image to image (output vs. ground truth, i.e., noisy vs. clean), therefore we need a different loss function compared to the segmentation task (image to mask). 
 # For example, we may want to somehow measure the pixel-wise difference in intensity between the output and the ground truth.
 # Can you think of a suitable loss function?
 #
@@ -633,7 +674,7 @@ model = UNet(depth=2, in_channels=1, out_channels=1)
 # </div>
 
 # %% tags=["task"]
-loss = #### YOUR CODE HERE ####
+loss = ... #### YOUR CODE HERE ####
 
 # %% tags=["solution"]
 loss = torch.nn.MSELoss()
@@ -648,7 +689,7 @@ loss = torch.nn.MSELoss()
 # </div>
 
 # %% tags=["task"]
-optimizer = #### YOUR CODE HERE ####
+optimizer = ... #### YOUR CODE HERE ####
 
 # %% tags=["solution"]
 optimizer = torch.optim.Adam(
@@ -669,7 +710,7 @@ optimizer = torch.optim.Adam(
 # Follow these steps to launch Tensorboard to monitor your training run:
 
 # 1) Start training. Run the cell below to begin training the model and generating logs.
-# 2) Once training is started, open the command palette (ctrl+shift+p), search for Python: Launch Tensorboard and hit enter.
+# 2) Once training is started, open the command palette (ctrl+shift+p), search for `Python: Launch Tensorboard` and hit enter.
 # 3) When prompted, select "Select another folder" and enter the path to the `01_CARE/runs/` directory.
 #
 # </div>
@@ -786,9 +827,11 @@ test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3>Task 6: Denormalization</h3>
 #
+# CARE is an image to image model. If we feed it normalized images and use normalized targets for training, it will output normalized images.
+# Therefore, we can map the model output back to the original intensity range by reverting the normalization operation, i.e., **denormalizing**.
 # Define the denormalization function. It should take a normalized image (e.g., the model output), the mean and the standard deviation over the dataset and return the denormalized image.
 #
-# *hint* : You just need to invert the normalization operation you defined above!
+# *hint* : You just need to invert the normalization formula you defined above!
 # </div>
 
 # %% tags=["task"]
@@ -814,7 +857,7 @@ def denormalize(
     np.ndarray
         Denormalized array.
     """
-    return # YOUR CODE HERE
+    return ... # YOUR CODE HERE
 
 # %% tags=["solution"]
 def denormalize(
@@ -861,10 +904,13 @@ with no_grad():
     for i, (image_batch, target_batch) in enumerate(test_dataloader):
         image_batch = image_batch.to(device)
         target_batch = target_batch.to(device)
-        output = model(image_batch)
+        prediction = model(image_batch).cpu().numpy()
+        
+        # Denormalize the prediction
+        prediction = ... # YOUR CODE HERE
 
         # Save the predictions for visualization
-        predictions.append(denormalize(output.cpu().numpy(), #### YOUR CODE HERE ####))
+        predictions.append(prediction)
 
 # %% tags=["solution"]
 # Define the prediction loop
@@ -875,10 +921,13 @@ with no_grad():
     for i, (image_batch, target_batch) in enumerate(test_dataloader):
         image_batch = image_batch.to(device)
         target_batch = target_batch.to(device)
-        output = model(image_batch)
+        prediction = model(image_batch).cpu().numpy()
+        
+        # Denormalize the prediction
+        prediction = denormalize(prediction, target_mean, target_std)
 
         # Save the predictions for visualization
-        predictions.append(denormalize(output.cpu().numpy(), target_mean, target_std))
+        predictions.append(prediction)
 
 # %% [markdown] tags=[]
 # ### Visualize the predictions
@@ -917,7 +966,10 @@ plt.tight_layout()
 # To learn more about denoising, you can choose from [02_Noise2Void](../02_Noise2Void/exercise.ipynb) or [03_COSDD](../03_COSDD/exercise.ipynb).
 # Or, to learn about computational unmixing, try [04_DenoiSplit](../04_DenoiSplit/exercise.ipynb).
 #
-# [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained directly on (unpaired) noisy images in a self-supervised fashion. Meaning that, unlike CARE, we don't need any examples of clean images.
+# Notice that exercises have different levels of difficulty.
+# Choose one that matches your confidence level (or be brave and try something harder)!
+#
+# (EASY) [02_Noise2Void](../02_Noise2Void/exercise.ipynb) is a denoiser that is trained directly on (unpaired) noisy images in a self-supervised fashion. Meaning that, unlike CARE, we don't need any examples of clean images.
 # It's also relatively quick to train.
 # But there's a catch.
 # It relies on the assumption that the noise is unstructured.
@@ -926,7 +978,7 @@ plt.tight_layout()
 #
 # <img src="./../02_Noise2Void/imgs/unstructured noise.png">
 #
-# [03_COSDD](../03_COSDD/exercise.ipynb) is also a denoiser trained using unpaired noisy images, but it can handle a specific form of structure.
+# (HARD) [03_COSDD](../03_COSDD/exercise.ipynb) is also a denoiser trained using unpaired noisy images, but it can handle a specific form of structure.
 # That structure is row correlation.
 # Row-correlated noise is common in scanning-based imaging techniques like point-scanning confocal microscopy, an example is shown below.
 # It can also be found when using sCMOS sensors.
@@ -934,7 +986,7 @@ plt.tight_layout()
 #
 # <img src="./../03_COSDD/resources/structured noise.png">
 #
-# [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
+# (HARD) [04_MicroSplit](../04_MicroSplit/exercise.ipynb) is a computational multiplexing technique.
 # It uses deep learning to separate multiple superimposed cellular structures within a single fluorescent image channel, turning one fluorescent channel into multiple ones (up to 4 in our work).
 # Imaging multiple cellular structures in a single fluorescent channel effectively increases the available photon budget, which can be reallocated to achieve faster imaging, higher signal-to-noise ratios, or the imaging of additional structures. 
 # An example of splitting is shown below.

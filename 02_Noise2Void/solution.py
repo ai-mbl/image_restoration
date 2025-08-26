@@ -20,16 +20,16 @@
 #
 # For each training patch, it first selects some random pixels which get *masked*. Masking is 
 # not simply done by setting pixel values to 0 (which could hinder network performance, as it is an
-# *unexpected*, or more properly out-of-distribution, value), but by replacing the value with the one of the neighboring pixels.
+# unexpected, or more properly, *out-of-distribution* value), but by replacing the value with the one of the neighboring pixels.
 #
 # Then, the network is trained with the objective of predicting the value of the masked pixels. 
 # Since the masked value is different from the original value, the network is forced to use the information
 # contained in all the surrounding pixels to infer the masked one. If the noise is pixel-independent, but the signal is not,
-# then the network is not able to predict the amount of noise in the original pixel and it ends
-# up predicting a value close to the "clean", or denoised, value, i.e., the signal.
+# then the network will not be able to predict the amount of noise in the original pixel and it will end
+# up predicting something close to the "clean", or denoised, value, i.e., the signal.
 #
 # In this notebook, we will use an existing Python library called [Careamics](https://careamics.github.io)
-# that includes efficient and user-friendly implementations of N2V and other algorithms:
+# that includes efficient and user-friendly implementations of N2V and other algorithms for image restoration.
 #
 # <p align="center">
 #     <img src="https://raw.githubusercontent.com/CAREamics/.github/main/profile/images/banner_careamics.png" width=400>
@@ -100,10 +100,10 @@ from careamics.transforms import N2VManipulate
 
 # %% tags=[]
 # Define a patch size for this exercise
-dummy_patch_size = 10
+dummy_patch_size = 64
 
 # Define masking parameters
-roi_size = 3 # <-- try changing this
+roi_size = 10 # <-- try changing this
 masked_pixel_percentage = 1 # <-- try changing this
 strategy = 'uniform' # <-- select between 'uniform' and 'median'
 
@@ -125,6 +125,7 @@ manipulator = N2VManipulate(
 masked_patch, original_patch, mask = manipulator(patch)
 
 # Visualize the masked patch and the mask
+# NOTE: masked pixels are shown as white pixels on the right
 fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 ax[0].imshow(masked_patch[0])
 ax[0].title.set_text("Manipulated patch")
@@ -209,6 +210,8 @@ plt.imshow(val_image, cmap="gray")
 # - `roi_size`: size of the N2V manipulation region (remember that parameter?)
 # - `masked_pixel_percentage`: percentage of pixels to mask
 # - `logger`: which logger to use
+# - `checkpoint_params`: Parameters for the checkpoint callback, see PyTorch Lightning documentation
+# (`ModelCheckpoint`) for the list of available parameters.
 #
 #
 # Have a look at the [documentation](https://careamics.github.io) to see the full list of parameters and 
@@ -226,7 +229,12 @@ training_config = create_n2v_configuration(
     num_epochs=10,
     roi_size=11,
     masked_pixel_percentage=0.2,
-    logger="tensorboard"
+    logger="tensorboard",
+    checkpoint_params={
+        "monitor": "val_loss",
+        "mode": "min",
+        "save_top_k": 1,
+    }
 )
 
 # %% [markdown] tags=[]
@@ -255,19 +263,12 @@ careamist.train(train_source=train_images_path, val_source=validation_images_pat
 # Logs for this model are stored in the `02_Noise2Void/tb_logs/` folder.
 # </div>
 #
-# <div class="alert alert-block alert-warning"><h3>Question: N2V loss curve</h3>
-#
-# Do you remember what the loss is in Noise2Void? What is the meaning of the loss curve in that case? Can
-# it be easily interpreted?
-# </div>
-#
 # <div class="alert alert-block alert-success"><h1>Checkpoint 2: Training Noise2Void</h1>
+# We trained, but how well did it do?
 # </div>
 
 # %% [markdown] tags=[]
 # <hr style="height:2px;">
-#
-# We trained, but how well did it do?
 
 # %% [markdown] tags=[]
 # ## Part 5. Prediction
@@ -317,6 +318,13 @@ fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 ax[0].imshow(train_image[y_start:y_end, x_start:x_end], cmap="gray")
 ax[1].imshow(preds.squeeze()[y_start:y_end, x_start:x_end], cmap="gray")
 
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3><b>Answer: Inspect the image closely</b></h3>
+#
+# You should see some artefacts and some peculiar textures in the denoised image. This is likely due to the fact that the noise in the image is not entirely pixel-independent, violating one of the key assumptions of Noise2Void. As a result, the network may have learned to reproduce some of the noise patterns present in the training data, leading to these artefacts in the denoised image.
+#
+# </div>
+
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-warning"><h3><b>Question: Check the residuals</b></h3>
 #
@@ -328,14 +336,14 @@ ax[1].imshow(preds.squeeze()[y_start:y_end, x_start:x_end], cmap="gray")
 residuals = preds.squeeze() - train_image
 plt.imshow(residuals, cmap="gray")
 
-# %% tags=[]
-# Show a close up image
-y_start = 200
-y_end = 450
-x_start = 600
-x_end = 850
-
-plt.imshow(residuals[y_start:y_end, x_start:x_end], cmap="gray")
+# %% [markdown] tags=["solution"]
+# <div class="alert alert-block alert-warning"><h3><b>Answer: Check the residuals</b></h3>
+#
+# Ideally N2V should remove only the noise, so the residuals should look like pure noise.
+# However, if the assumptions of N2V are not met (e.g., if the noise is not pixel-independent),
+# the residuals may contain artifacts or other structures that were not present in the original image.
+#
+# </div>
 
 # %% [markdown] tags=[]
 # <div class="alert alert-block alert-info"><h3><b>Task 4(Optional): Improving the results</b></h3>
@@ -347,17 +355,38 @@ plt.imshow(residuals[y_start:y_end, x_start:x_end], cmap="gray")
 # </div>
 
 # %% [markdown] tags=[]
-# ### How to predict without training?
+# ### How we can get results without training?
+#
+# For instance, we can load the weights (a checkpoint) from the last training we did and use them to predict on a new image.
 #
 # Here again, CAREamics provides a way to create a CAREamist from a checkpoint only,
 # allowing predicting without having to retrain.
 
+# %% [markdown] tags=[]
+# <div class="alert alert-block alert-info"><h3><b>Task 5: Load Checkpoints</b></h3>
+#
+# Initialize a new CAREamist from the checkpoint we just created and use it to predict on the same image as before.
+# You need to specify the path to the checkpoint file `.ckpt`, which is stored in the `checkpoints/` folder inside the experiment folder.
+#
+# You will find 2 checkpoints: the best one (`experiment_name.ckpt`) and the last one (`last.ckpt`).
+#
+# </div>
+
+# %% tags=[]
+# Set the path to the checkpoint
+checkpoint_path = ... # YOUR CODE HERE
+
+# Check at which epoch the model was saved
+from torch import load
+ckpt = load(checkpoint_path, map_location="cpu")
+print(f"Checkpoint from epoch: {ckpt['epoch']}")
+
 # %% tags=[]
 # Instantiate a CAREamist from a checkpoint
-other_careamist = CAREamist(source="checkpoints/last.ckpt")
+pretrained_careamist = CAREamist(source=checkpoint_path)
 
 # And predict
-new_preds = other_careamist.predict(source=train_images_path, tile_size=(256, 256))[0]
+new_preds = pretrained_careamist.predict(source=train_images_path, tile_size=(256, 256))[0]
 
 # Show the full image
 fig, ax = plt.subplots(1, 2, figsize=(10, 5))
@@ -371,17 +400,17 @@ ax[1].imshow(new_preds.squeeze(), cmap="gray")
 # %% [markdown] tags=[]
 # <hr style="height:2px;"><div class="alert alert-block alert-warning"><h3>Take away questions</h3>
 #
-# - Which is the best saved checkpoint for Noise2Void, the one at the end of the training or the one with lowest validation loss?
+# - Why often times the last checkpoint is not the best one?
 #
-# - Is validation useful in Noise2Void?
+# - Is validation/test useful even if Noise2Void is an unsupervised method?
 #
 # - We predicted on the same image we trained on, is that a good idea?
 #
-# - Can you reuse the model on different images?
+# - Can you reuse the model on a different dataset with different images?
 #
 # - Can you train on images with multiple channels? RGB images? Biological channels (GFP, RFP, DAPI)?
 #
-# - N2V training is unsupervised, how can you be sure that the training worked and is not hallucinating?
+# - N2V training is unsupervised, how can you be sure that the training worked and is not overfitting or hallucinating?
 # </div>
 #
 
