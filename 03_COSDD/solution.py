@@ -581,11 +581,11 @@ predictor = pl.Trainer(
 # ## 8. Denoise
 # In this section, we will look at how COSDD does inference. 
 #
-# The model denoises images randomly, giving us a different output each time. First, we will compare seven randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging 10 randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
+# The model denoises images randomly, giving us a different output each time. First, we will compare three randomly sampled denoised images for the same noisy image. Then, we will produce a single consensus estimate by averaging randomly sampled denoised images. Finally, if the Direct Denoiser was trained in the previous step, we will see how it can be used to estimate this average in a single pass.
 
 # %% [markdown] tags=[]
 # ### 8.1 Random sampling 
-# First, we will denoise each image seven times and look at the difference between each estimate.
+# First, we will denoise each image three times and look at the difference between each estimate.
 
 # %% tags=[]
 use_direct_denoiser = False
@@ -605,11 +605,12 @@ samples = torch.stack(samples, dim=1).half()
 #
 # ### Task 8.1.
 #
-# Here, we'll look at the original noisy image and the seven random denoised estimates. Use the sliders to look at different images and adjust the crop. 
+# Here, we'll look at the original noisy image and the random denoised estimates. Use the sliders to look at different images and adjust the crop. 
+# If you're using the model trained in 15 minutes, don't worry if the results don't look very good. 
 #
 # Use this section to really explore the results. Compare high intensity reigons to low intensity reigons, zoom in and out and spot the differences between the different samples. 
 #
-# The seven sampled denoised images have differences that express the uncertainty involved in this denoising problem.
+# The sampled denoised images have differences that express the uncertainty involved in this denoising problem.
 # </div>
 
 # %% tags=[]
