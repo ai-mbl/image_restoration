@@ -35,7 +35,7 @@ device = torch.device("cuda" if use_cuda else "cpu")
 
 # %%
 # load the data
-paths = "../data"
+paths = "/mnt/efs/aimbl_2025/data/"
 patterns = "mito-confocal-lowsnr.tif"
 axes = "SYX"
 n_dimensions = 2
@@ -55,7 +55,7 @@ low_snr, original_sizes = utils.load_data(
 model_name = ...  # Enter the model name here
 checkpoint_path = os.path.join("checkpoints", model_name)
 
-# checkpoint_path = "checkpoints/mito-confocal-pretrained"
+# checkpoint_path = "checkpoints/mito-pretrained"
 
 with open(os.path.join(checkpoint_path, "training-config.yaml")) as f:
     train_cfg = yaml.load(f, Loader=yaml.FullLoader)

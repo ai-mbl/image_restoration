@@ -89,7 +89,6 @@ from microsplit_reproducibility.notebook_utils.custom_dataset_2D import (
     get_unnormalized_predictions,
     get_target,
     get_input,
-    full_frame_evaluation,
     show_sampling,
     pick_random_patches_with_content,
 )
@@ -99,6 +98,7 @@ from utils import (
     get_train_val_data,
     compute_metrics,
     show_metrics,
+    full_frame_evaluation,
     load_pretrained_model,
     STRUCTURE_2_INDEX
 )

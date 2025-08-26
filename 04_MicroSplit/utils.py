@@ -2,6 +2,7 @@ from typing import Any
 from pathlib import Path
 from typing import Literal, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -293,3 +294,32 @@ def load_pretrained_model(model: pl.LightningModule, ckpt_path: str) -> None:
     ckpt_dict = torch.load(ckpt_path, map_location=device, weights_only=True)
     model.model.load_state_dict(ckpt_dict["state_dict"], strict=False)
     print(f"Loaded model from {ckpt_path}")
+
+
+def full_frame_evaluation(stitched_predictions, tar, inp, same_scale: bool = True):
+
+    ncols = tar.shape[-1] + 1
+    nrows = 2
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * 5, nrows * 5))
+    ax[0,0].imshow(inp)
+    vmins = np.percentile(stitched_predictions, q=1, axis=[0, 1])
+    vmaxes = np.percentile(stitched_predictions, q=99, axis=[0, 1])
+    for i in range(ncols - 1):
+        if same_scale:
+            ax[0,i+1].imshow(tar[...,i], vmin=vmins[i], vmax=vmaxes[i])
+            ax[1,i+1].imshow(stitched_predictions[...,i], vmin=vmins[i], vmax=vmaxes[i])
+        else:
+            ax[0,i+1].imshow(tar[...,i])
+            ax[1,i+1].imshow(stitched_predictions[...,i])
+
+        ax[0,i+1].set_title(f"Channel {i+1}", fontsize=15)
+
+    # disable the axis for ax[1,0]
+    ax[1,0].axis('off')
+    ax[0,0].set_title("Input", fontsize=15)
+    # set y labels on the right for ax[0,2]
+    ax[0,ncols-1].yaxis.set_label_position("right")
+    ax[0,ncols-1].set_ylabel("Target", fontsize=15)
+
+    ax[1,ncols-1].yaxis.set_label_position("right")
+    ax[1,ncols-1].set_ylabel("Predicted", fontsize=15)
